@@ -1,0 +1,38 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: demand-workbench-backend
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/demand_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${MYSQL_USERNAME:demand}
+    password: ${MYSQL_PASSWORD:demand_dev}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 1
+  ai:
+    openai:
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      api-key: ${DEEPSEEK_API_KEY:}
+      chat:
+        options:
+          model: ${DEEPSEEK_MODEL:deepseek-chat}
+          temperature: 0.2
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+deepseek:
+  model: ${DEEPSEEK_MODEL:deepseek-chat}
+  prompt-version: work-item-tree-v2
+
+decomposition:
+  executor:
+    core-pool-size: ${DECOMPOSITION_CORE_POOL_SIZE:2}
+    max-pool-size: ${DECOMPOSITION_MAX_POOL_SIZE:4}
+    queue-capacity: ${DECOMPOSITION_QUEUE_CAPACITY:50}
