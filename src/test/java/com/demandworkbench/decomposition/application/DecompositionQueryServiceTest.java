@@ -34,8 +34,8 @@ class DecompositionQueryServiceTest {
 
         var response = service.query("DEC-1");
 
-        assertThat(response.status()).isEqualTo("SUCCESS");
-        assertThat(response.summary()).isEqualTo(new com.demandworkbench.decomposition.controller.response.TaskResponse.Summary(1, 1, 1, 1));
+        assertThat(response.status()).isEqualTo("success");
+        assertThat(response.summary()).isEqualTo(new DecompositionResult.Summary(1, 1, 1, 1));
         assertThat(response.modules()).hasSize(1);
         assertThat(response.modules().getFirst().children().getFirst().children().getFirst().name()).isEqualTo("登录接口");
     }

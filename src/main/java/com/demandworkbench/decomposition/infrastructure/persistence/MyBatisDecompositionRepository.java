@@ -1,6 +1,7 @@
 package com.demandworkbench.decomposition.infrastructure.persistence;
 
 import com.demandworkbench.decomposition.application.DecompositionRepository;
+import com.demandworkbench.decomposition.application.DecompositionErrorCode;
 import com.demandworkbench.decomposition.application.WorkItemGenerator;
 import com.demandworkbench.decomposition.domain.model.WorkItemNode;
 import com.demandworkbench.decomposition.domain.model.WorkItemTree;
@@ -30,8 +31,8 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         var record = new DecompositionRecord();
         record.setId(id);
         record.setSourceContent(content);
-        record.setStatus(TaskStatus.QUEUED.name());
-        record.setStage(TaskStage.QUEUED.name());
+        record.setStatus(TaskStatus.QUEUED.getCode());
+        record.setStage(TaskStage.QUEUED.getCode());
         record.setModel(model);
         record.setPromptVersion(promptVersion);
         record.setCreatedAt(createdAt);
@@ -40,7 +41,7 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
 
     @Override
     public void updateStage(String id, TaskStatus status, TaskStage stage) {
-        decompositionMapper.updateStage(id, status.name(), stage.name());
+        decompositionMapper.updateStage(id, status.getCode(), stage.getCode());
     }
 
     @Override
@@ -49,20 +50,26 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         workItemMapper.deleteByDecompositionId(id);
         var order = new AtomicInteger();
         for (var module : result.tree().modules()) persist(id, null, module, order);
-        decompositionMapper.markSuccess(id, result.rawResponse(), result.promptTokens(), result.completionTokens());
+        decompositionMapper.markSuccess(id, TaskStatus.SUCCESS.getCode(), TaskStage.COMPLETED.getCode(),
+                result.rawResponse(), result.promptTokens(), result.completionTokens());
     }
 
     @Override
-    public void fail(String id, String errorCode, String errorMessage) {
-        decompositionMapper.markFailed(id, errorCode, errorMessage);
+    public void fail(String id, DecompositionErrorCode errorCode, String errorMessage) {
+        decompositionMapper.markFailed(id, TaskStatus.FAILED.getCode(), TaskStage.FAILED.getCode(),
+                errorCode.getCode(), errorMessage);
     }
 
     @Override
     public TaskSnapshot find(String id) {
         var record = decompositionMapper.findById(id);
         if (record == null) return null;
-        return new TaskSnapshot(record.getId(), TaskStatus.valueOf(record.getStatus()),
-                TaskStage.valueOf(record.getStage()), record.getErrorCode(), record.getErrorMessage(),
+        var errorCode = record.getErrorCode() == null
+                ? null
+                : DecompositionErrorCode.fromCode(record.getErrorCode());
+        return new TaskSnapshot(record.getId(), TaskStatus.fromCode(record.getStatus()),
+                TaskStage.fromCode(record.getStage()), errorCode,
+                record.getErrorMessage(),
                 record.getCreatedAt(), record.getCompletedAt());
     }
 
@@ -85,7 +92,9 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
 
     @Override
     public int failInterruptedTasks() {
-        return decompositionMapper.failInterruptedTasks();
+        var errorCode = DecompositionErrorCode.SERVER_RESTARTED;
+        return decompositionMapper.failInterruptedTasks(TaskStatus.FAILED.getCode(), TaskStage.FAILED.getCode(),
+                errorCode.getCode(), errorCode.getMsg(), TaskStatus.QUEUED.getCode(), TaskStatus.PROCESSING.getCode());
     }
 
     private void persist(String taskId, String parentId, WorkItemNode node, AtomicInteger order) {
@@ -95,7 +104,7 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         record.setId(persistedId);
         record.setDecompositionId(taskId);
         record.setParentId(parentId);
-        record.setType(node.type().value());
+        record.setType(node.type().getCode());
         record.setName(node.name());
         record.setDescription(node.description());
         record.setStatus(node.status());
@@ -112,7 +121,7 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
     }
 
     private WorkItemNode toNode(WorkItemRecord record) {
-        return new WorkItemNode(record.getId(), WorkItemType.fromValue(record.getType()), record.getName(),
+        return new WorkItemNode(record.getId(), WorkItemType.fromCode(record.getType()), record.getName(),
                 record.getDescription(), record.getStatus(), record.getRoleName(), record.getPriority(),
                 record.getStartDate(), record.getEndDate(), record.getDependencyText(), new ArrayList<>());
     }

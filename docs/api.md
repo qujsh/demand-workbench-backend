@@ -18,9 +18,14 @@
 
 ```json
 {
-  "taskId": "DEC-xxx",
-  "status": "QUEUED",
-  "message": "拆解任务已提交"
+  "success": true,
+  "msg": {
+    "taskId": "DEC-xxx",
+    "status": "queued",
+    "message": "拆解任务已提交"
+  },
+  "errorCode": "",
+  "errorMsg": ""
 }
 ```
 
@@ -28,13 +33,66 @@
 
 接口：`GET /api/v1/requirements/decompose?taskId=DEC-xxx`
 
-前端通过 Query 参数传入任务 ID，并轮询该接口，直到 `status` 变为 `SUCCESS` 或 `FAILED`。
+前端通过 Query 参数传入任务 ID，并轮询该接口，直到 `status` 变为 `success` 或 `failed`。
+
+查询成功时，任务状态和拆解结果位于 `msg` 字段中。即使异步任务状态为 `failed`，只要查询请求本身成功，外层 `success` 仍为 `true`。
 
 拆解成功后，响应中包含以下工作项层级：
 
 ```text
 模块 module -> 功能 feature -> 工作项 work -> 子任务 subtask
 ```
+
+### 枚举值
+
+| 字段 | 可用值 |
+|---|---|
+| 任务状态 `status` | `queued`、`processing`、`success`、`failed` |
+| 处理阶段 `stage` | `queued`、`ai_generating`、`validating`、`saving`、`completed`、`failed` |
+| 工作项类型 `type` | `module`、`feature`、`work`、`subtask` |
+| 优先级 `priority` | `unset`、`low`、`medium`、`high` |
+
+## 统一响应格式
+
+所有接口使用以下响应结构：
+
+```json
+{
+  "success": true,
+  "msg": {},
+  "errorCode": "",
+  "errorMsg": ""
+}
+```
+
+- `success`：HTTP 请求是否成功处理。
+- `msg`：成功时的业务响应数据；失败时为 `null`。
+- `errorCode`：稳定的内部错误码；成功时为空字符串。
+- `errorMsg`：可向调用方展示的错误信息；成功时为空字符串。
+
+失败示例：
+
+```json
+{
+  "success": false,
+  "msg": null,
+  "errorCode": "S048101002",
+  "errorMsg": "拆解任务不存在"
+}
+```
+
+### 错误码
+
+| 错误码 | 含义 |
+|---|---|
+| `S048101001` | 请求内容无效 |
+| `S048101002` | 拆解任务不存在 |
+| `S048101003` | 任务队列繁忙，请稍后重试 |
+| `S048101004` | AI 服务请求失败 |
+| `S048101005` | 模型返回结果无效 |
+| `S048101006` | 需求拆解失败 |
+| `S048101007` | 服务重启导致任务中断 |
+| `S048101008` | 系统内部错误 |
 
 ## 兼容性要求
 

@@ -14,6 +14,12 @@ public class DecompositionJobRunner {
         this.repository = repository;
     }
 
+    /**
+     * 执行 AI 生成、结果校验和持久化，并在失败时记录任务错误。
+     *
+     * @param taskId 拆解任务编号
+     * @param content 待拆解的需求内容
+     */
     public void run(String taskId, String content) {
         try {
             repository.updateStage(taskId, TaskStatus.PROCESSING, TaskStage.AI_GENERATING);
@@ -23,15 +29,17 @@ public class DecompositionJobRunner {
             repository.updateStage(taskId, TaskStatus.PROCESSING, TaskStage.SAVING);
             repository.complete(taskId, result);
         } catch (DecompositionException exception) {
-            repository.fail(taskId, exception.getCode(), truncate(exception.getMessage()));
+            repository.fail(taskId, exception.getErrorCode(), truncate(exception.getMessage()));
         } catch (Exception exception) {
-            repository.fail(taskId, "DECOMPOSITION_FAILED", truncate(exception.getMessage()));
+            var errorCode = DecompositionErrorCode.DECOMPOSITION_FAILED;
+            repository.fail(taskId, errorCode, errorCode.getMsg());
         }
     }
 
     private void validate(WorkItemGenerator.GenerationResult result) {
         if (result == null || result.tree() == null || result.tree().modules().isEmpty()) {
-            throw new DecompositionException("INVALID_MODEL_OUTPUT", "模型没有返回可保存的工作项");
+            throw new DecompositionException(
+                    DecompositionErrorCode.INVALID_MODEL_OUTPUT, "模型没有返回可保存的工作项");
         }
     }
 

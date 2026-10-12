@@ -1,5 +1,6 @@
 package com.demandworkbench.decomposition.controller;
 
+import com.demandworkbench.common.ApiResponse;
 import com.demandworkbench.decomposition.application.DecompositionCommandService;
 import com.demandworkbench.decomposition.application.DecompositionQueryService;
 import com.demandworkbench.decomposition.controller.request.DecomposeRequest;
@@ -30,13 +31,20 @@ public class DecompositionController {
         this.queryService = queryService;
     }
 
+    /**
+     * 接收需求内容并创建异步拆解任务。
+     */
     @PostMapping
-    public ResponseEntity<SubmitResponse> submit(@Valid @RequestBody DecomposeRequest request) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(commandService.submit(request.content()));
+    public ResponseEntity<ApiResponse<SubmitResponse>> submit(@Valid @RequestBody DecomposeRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(ApiResponse.success(SubmitResponse.from(commandService.submit(request.content()))));
     }
 
+    /**
+     * 查询拆解任务的当前状态和结果。
+     */
     @GetMapping
-    public TaskResponse query(@RequestParam @NotBlank String taskId) {
-        return queryService.query(taskId);
+    public ApiResponse<TaskResponse> query(@RequestParam @NotBlank String taskId) {
+        return ApiResponse.success(TaskResponse.from(queryService.query(taskId)));
     }
 }

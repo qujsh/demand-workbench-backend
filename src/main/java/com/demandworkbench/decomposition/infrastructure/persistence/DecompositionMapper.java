@@ -26,26 +26,31 @@ public interface DecompositionMapper {
 
     @Update("""
         UPDATE decomposition_record
-        SET status = 'SUCCESS', stage = 'COMPLETED', raw_response = #{rawResponse},
+        SET status = #{status}, stage = #{stage}, raw_response = #{rawResponse},
             prompt_tokens = #{promptTokens}, completion_tokens = #{completionTokens}, completed_at = CURRENT_TIMESTAMP(3)
         WHERE id = #{id}
         """)
-    void markSuccess(@Param("id") String id, @Param("rawResponse") String rawResponse,
+    void markSuccess(@Param("id") String id, @Param("status") String status, @Param("stage") String stage,
+                     @Param("rawResponse") String rawResponse,
                      @Param("promptTokens") Integer promptTokens, @Param("completionTokens") Integer completionTokens);
 
     @Update("""
         UPDATE decomposition_record
-        SET status = 'FAILED', stage = 'FAILED', error_code = #{errorCode}, error_message = #{errorMessage},
+        SET status = #{status}, stage = #{stage}, error_code = #{errorCode}, error_message = #{errorMessage},
             completed_at = CURRENT_TIMESTAMP(3)
         WHERE id = #{id}
         """)
-    void markFailed(@Param("id") String id, @Param("errorCode") String errorCode, @Param("errorMessage") String errorMessage);
+    void markFailed(@Param("id") String id, @Param("status") String status, @Param("stage") String stage,
+                    @Param("errorCode") String errorCode, @Param("errorMessage") String errorMessage);
 
     @Update("""
         UPDATE decomposition_record
-        SET status = 'FAILED', stage = 'FAILED', error_code = 'SERVER_RESTARTED',
-            error_message = '服务重启，任务未完成，请重新提交', completed_at = CURRENT_TIMESTAMP(3)
-        WHERE status IN ('QUEUED', 'PROCESSING')
+        SET status = #{failedStatus}, stage = #{failedStage}, error_code = #{errorCode},
+            error_message = #{errorMessage}, completed_at = CURRENT_TIMESTAMP(3)
+        WHERE status IN (#{queuedStatus}, #{processingStatus})
         """)
-    int failInterruptedTasks();
+    int failInterruptedTasks(@Param("failedStatus") String failedStatus, @Param("failedStage") String failedStage,
+                             @Param("errorCode") String errorCode, @Param("errorMessage") String errorMessage,
+                             @Param("queuedStatus") String queuedStatus,
+                             @Param("processingStatus") String processingStatus);
 }

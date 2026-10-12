@@ -38,10 +38,10 @@ class DecompositionJobRunnerTest {
     @Test
     void shouldMarkTaskFailedWhenGeneratorFails() {
         when(generator.generate("需求内容"))
-                .thenThrow(new DecompositionException("AI_REQUEST_FAILED", "AI 服务不可用"));
+                .thenThrow(new DecompositionException(DecompositionErrorCode.AI_REQUEST_FAILED, "AI 服务不可用"));
 
         runner.run("DEC-1", "需求内容");
 
-        verify(repository).fail("DEC-1", "AI_REQUEST_FAILED", "AI 服务不可用");
+        verify(repository).fail("DEC-1", DecompositionErrorCode.AI_REQUEST_FAILED, "AI 服务不可用");
     }
 }

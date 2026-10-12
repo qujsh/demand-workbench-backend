@@ -1,6 +1,7 @@
 package com.demandworkbench.decomposition.infrastructure.ai;
 
 import com.demandworkbench.decomposition.application.DecompositionException;
+import com.demandworkbench.decomposition.application.DecompositionErrorCode;
 import com.demandworkbench.decomposition.application.WorkItemGenerator;
 import com.demandworkbench.decomposition.domain.model.WorkItemNode;
 import com.demandworkbench.decomposition.domain.model.WorkItemTree;
@@ -47,14 +48,18 @@ public class SpringAiWorkItemGenerator implements WorkItemGenerator {
             return new GenerationResult(normalize(aiTree), null, null, null);
         } catch (DecompositionException exception) {
             throw exception;
+        } catch (IllegalArgumentException exception) {
+            throw new DecompositionException(
+                    DecompositionErrorCode.INVALID_MODEL_OUTPUT, "模型返回了无效的枚举值", exception);
         } catch (Exception exception) {
-            throw new DecompositionException("AI_REQUEST_FAILED", "AI 服务请求或响应解析失败", exception);
+            throw new DecompositionException(
+                    DecompositionErrorCode.AI_REQUEST_FAILED, "AI 服务请求或响应解析失败", exception);
         }
     }
 
     private WorkItemTree normalize(AiWorkItemTree source) {
         if (source == null || source.modules() == null || source.modules().isEmpty()) {
-            throw new DecompositionException("INVALID_MODEL_OUTPUT", "模型没有返回模块数据");
+            throw new DecompositionException(DecompositionErrorCode.INVALID_MODEL_OUTPUT, "模型没有返回模块数据");
         }
         var counters = new int[MAX_DEPTH];
         var modules = new ArrayList<WorkItemNode>();
@@ -66,10 +71,11 @@ public class SpringAiWorkItemGenerator implements WorkItemGenerator {
 
     private WorkItemNode normalizeNode(AiWorkItemTree.AiNode source, int level, int[] counters) {
         if (level >= MAX_DEPTH) {
-            throw new DecompositionException("INVALID_MODEL_OUTPUT", "模型返回的工作项层级超过四级");
+            throw new DecompositionException(
+                    DecompositionErrorCode.INVALID_MODEL_OUTPUT, "模型返回的工作项层级超过四级");
         }
         if (source == null || !StringUtils.hasText(source.name())) {
-            throw new DecompositionException("INVALID_MODEL_OUTPUT", "模型返回了空名称节点");
+            throw new DecompositionException(DecompositionErrorCode.INVALID_MODEL_OUTPUT, "模型返回了空名称节点");
         }
         var type = WorkItemType.atLevel(level);
         var id = type.name() + "-" + String.format("%03d", ++counters[level]);

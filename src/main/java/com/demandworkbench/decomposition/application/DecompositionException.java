@@ -1,17 +1,23 @@
 package com.demandworkbench.decomposition.application;
 
 public class DecompositionException extends RuntimeException {
-    private final String code;
+    private final DecompositionErrorCode errorCode;
 
-    public DecompositionException(String code, String message) {
+    public DecompositionException(DecompositionErrorCode errorCode) {
+        this(errorCode, errorCode.getMsg());
+    }
+
+    public DecompositionException(DecompositionErrorCode errorCode, String message) {
         super(message);
-        this.code = code;
+        this.errorCode = errorCode;
     }
 
-    public DecompositionException(String code, String message, Throwable cause) {
+    public DecompositionException(DecompositionErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);
-        this.code = code;
+        this.errorCode = errorCode;
     }
 
-    public String getCode() { return code; }
+    public DecompositionErrorCode getErrorCode() {
+        return errorCode;
+    }
 }

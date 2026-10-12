@@ -9,11 +9,11 @@ public interface DecompositionRepository {
     void create(String id, String content, String model, String promptVersion, LocalDateTime createdAt);
     void updateStage(String id, TaskStatus status, TaskStage stage);
     void complete(String id, WorkItemGenerator.GenerationResult result);
-    void fail(String id, String errorCode, String errorMessage);
+    void fail(String id, DecompositionErrorCode errorCode, String errorMessage);
     TaskSnapshot find(String id);
     WorkItemTree findTree(String id);
     int failInterruptedTasks();
 
-    record TaskSnapshot(String id, TaskStatus status, TaskStage stage, String errorCode,
+    record TaskSnapshot(String id, TaskStatus status, TaskStage stage, DecompositionErrorCode errorCode,
                         String errorMessage, LocalDateTime createdAt, LocalDateTime completedAt) {}
 }
