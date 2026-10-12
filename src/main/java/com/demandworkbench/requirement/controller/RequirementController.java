@@ -50,4 +50,13 @@ public class RequirementController {
     public ApiResponse<List<RequirementResponse>> list() {
         return ApiResponse.success(service.list().stream().map(RequirementResponse::from).toList());
     }
+
+    /**
+     * 按业务编号软删除需求。
+     */
+    @PostMapping("/delete")
+    public ApiResponse<String> delete(@RequestParam @NotBlank String requirementNo) {
+        service.delete(requirementNo);
+        return ApiResponse.success("deleted");
+    }
 }

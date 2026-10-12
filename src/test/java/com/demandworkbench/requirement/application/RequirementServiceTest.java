@@ -55,6 +55,25 @@ class RequirementServiceTest {
                 .isEqualTo(RequirementErrorCode.DECOMPOSITION_NOT_COMPLETED);
     }
 
+    @Test
+    void shouldSoftDeleteRequirementByBusinessNumber() {
+        when(repository.softDelete("REQ-KFYTYY-000025")).thenReturn(true);
+
+        service.delete("REQ-KFYTYY-000025");
+
+        verify(repository).softDelete("REQ-KFYTYY-000025");
+    }
+
+    @Test
+    void shouldRejectDeletingMissingRequirement() {
+        when(repository.softDelete("REQ-MISSING-000001")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.delete("REQ-MISSING-000001"))
+                .isInstanceOf(RequirementException.class)
+                .extracting("errorCode")
+                .isEqualTo(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+    }
+
     private RequirementService.SaveCommand command(String title, String decompositionId) {
         return new RequirementService.SaveCommand(title, "用户描述", "AI 描述", "analyzing",
                 decompositionId, List.of());

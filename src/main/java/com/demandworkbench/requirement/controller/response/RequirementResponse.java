@@ -10,7 +10,7 @@ public record RequirementResponse(
         String userDescription,
         String aiDescription,
         String stage,
-        String currentDecompositionId,
+        String currentDecompositionNo,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         int moduleCount,
@@ -19,7 +19,7 @@ public record RequirementResponse(
 
     public static RequirementResponse from(RequirementData data) {
         return new RequirementResponse(data.requirementNo(), data.title(), data.userDescription(),
-                data.aiDescription(), data.stage(), data.currentDecompositionId(), data.createdAt(), data.updatedAt(),
+                data.aiDescription(), data.stage(), data.currentDecompositionNo(), data.createdAt(), data.updatedAt(),
                 data.moduleCount(), data.workItemCount(),
                 data.attachments().stream().map(AttachmentResponse::from).toList());
     }

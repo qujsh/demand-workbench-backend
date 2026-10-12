@@ -18,7 +18,7 @@ public record SaveRequirementRequest(
         @NotBlank(message = "需求阶段不能为空")
         String stage,
         @Size(max = 40, message = "拆解任务编号不能超过 40 个字符")
-        String currentDecompositionId,
+        String currentDecompositionNo,
         @Valid @NotNull(message = "附件列表不能为空")
         List<AttachmentRequest> attachments) {
 
@@ -28,7 +28,7 @@ public record SaveRequirementRequest(
                         item.contentType(), item.fileSize(), item.sortOrder()))
                 .toList();
         return new RequirementService.SaveCommand(title, userDescription, aiDescription, stage,
-                currentDecompositionId, attachmentData);
+                currentDecompositionNo, attachmentData);
     }
 
     public record AttachmentRequest(

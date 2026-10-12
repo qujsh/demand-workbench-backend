@@ -116,7 +116,7 @@ class InitialSchemaMigrationTest {
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(49);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(50);
         }
     }
 }

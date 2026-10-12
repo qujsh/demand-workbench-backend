@@ -7,12 +7,14 @@ CREATE TABLE requirement (
     ai_description LONGTEXT COMMENT '人工确认后的 AI 需求描述',
     stage VARCHAR(24) NOT NULL COMMENT '需求当前阶段编码',
     current_decomposition_id BIGINT UNSIGNED COMMENT '当前采用的拆解任务内部主键',
+    deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE INDEX uk_requirement_no (requirement_no),
     INDEX idx_requirement_stage_updated (stage, updated_at),
+    INDEX idx_requirement_deleted_updated (deleted, updated_at),
     INDEX idx_requirement_decomposition (current_decomposition_id)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4

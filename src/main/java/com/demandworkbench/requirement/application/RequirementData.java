@@ -11,7 +11,7 @@ public record RequirementData(
         String userDescription,
         String aiDescription,
         String stage,
-        String currentDecompositionId,
+        String currentDecompositionNo,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         int moduleCount,

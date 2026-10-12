@@ -108,7 +108,7 @@
   "userDescription": "用户填写的需求描述",
   "aiDescription": "人工确认后的 AI 需求描述",
   "stage": "ready_to_publish",
-  "currentDecompositionId": "DEC-C10344C6F3C942AC93D4",
+  "currentDecompositionNo": "DEC-C10344C6F3C942AC93D4",
   "attachments": [
     {
       "fileName": "需求说明.docx",
@@ -125,7 +125,7 @@
 - 编号格式为 `REQ-{TITLE_CODE}-{ID}`，例如 `REQ-KFYTYY-000025`。
 - `TITLE_CODE` 取标题中中文拼音首字母、英文字母和数字，转为大写并最多保留 6 位；无法生成时使用 `COMMON`。
 - 需求编号只在首次创建时生成，修改标题不会改变已有编号。
-- `currentDecompositionId` 可以为空；传入时，对应拆解任务必须存在且状态为 `success`。
+- `currentDecompositionNo` 可以为空；传入时，对应拆解任务必须存在且状态为 `success`。
 - `attachments` 只保存已经上传完成的文件元数据，本接口不接收文件二进制。
 
 需求阶段：
@@ -140,7 +140,9 @@
 
 列表接口：`GET /api/v1/requirements/list`
 
-列表按最后更新时间倒序返回。详情和列表返回需求标题、两类需求描述、当前阶段、当前拆解任务、模块数、工作项数、附件及创建和更新时间。工作项数统计 `work` 和 `subtask` 两类可执行节点。
+删除接口：`POST /api/v1/requirements/delete?requirementNo=REQ-KFYTYY-000025`
+
+删除接口将需求标记为已删除，不物理删除需求、附件、拆解记录或工作项。列表与详情接口只返回未删除需求。列表按最后更新时间倒序返回。详情和列表返回需求标题、两类需求描述、当前阶段、当前拆解任务、模块数、工作项数、附件及创建和更新时间。工作项数统计 `work` 和 `subtask` 两类可执行节点。
 
 ### 需求接口错误码
 

@@ -10,4 +10,6 @@ public interface RequirementRepository {
     RequirementData findByRequirementNo(String requirementNo);
 
     List<RequirementData> findAll();
+
+    boolean softDelete(String requirementNo);
 }

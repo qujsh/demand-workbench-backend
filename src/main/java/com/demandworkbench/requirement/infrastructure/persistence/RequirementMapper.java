@@ -27,7 +27,7 @@ public interface RequirementMapper {
         SET title = #{title}, user_description = #{userDescription}, ai_description = #{aiDescription},
             stage = #{stage}, current_decomposition_id =
                 (SELECT id FROM decomposition_record WHERE decomposition_no = #{currentDecompositionNo})
-        WHERE id = #{id}
+        WHERE id = #{id} AND deleted = 0
         """)
     int update(RequirementRecord record);
 
@@ -39,7 +39,7 @@ public interface RequirementMapper {
                 WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
-        WHERE r.id = #{id}
+        WHERE r.id = #{id} AND r.deleted = 0
         """)
     RequirementRecord findById(long id);
 
@@ -51,7 +51,7 @@ public interface RequirementMapper {
                 WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
-        WHERE r.requirement_no = #{requirementNo}
+        WHERE r.requirement_no = #{requirementNo} AND r.deleted = 0
         """)
     RequirementRecord findByRequirementNo(String requirementNo);
 
@@ -63,7 +63,15 @@ public interface RequirementMapper {
                 WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
+        WHERE r.deleted = 0
         ORDER BY r.updated_at DESC, r.id DESC
         """)
     List<RequirementRecord> findAll();
+
+    @Update("""
+        UPDATE requirement
+        SET deleted = 1
+        WHERE requirement_no = #{requirementNo} AND deleted = 0
+        """)
+    int softDelete(String requirementNo);
 }

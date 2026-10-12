@@ -23,7 +23,7 @@ public class RequirementService {
      */
     public RequirementData save(String requirementNo, SaveCommand command) {
         var stage = parseStage(command.stage());
-        validateDecomposition(command.currentDecompositionId());
+        validateDecomposition(command.currentDecompositionNo());
         if (requirementNo == null || requirementNo.isBlank()) {
             var titleCode = numberGenerator.generateTitleCode(command.title());
             return repository.create(toData(null, null, titleCode, stage, command));
@@ -58,10 +58,19 @@ public class RequirementService {
         return repository.findAll();
     }
 
+    /**
+     * 按业务编号软删除需求。
+     */
+    public void delete(String requirementNo) {
+        if (!repository.softDelete(requirementNo)) {
+            throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+        }
+    }
+
     private RequirementData toData(Long id, String requirementNo, String titleCode, String stage,
                                    SaveCommand command) {
         return new RequirementData(id, requirementNo, titleCode, command.title(), command.userDescription(),
-                command.aiDescription(), stage, command.currentDecompositionId(), null, null,
+                command.aiDescription(), stage, command.currentDecompositionNo(), null, null,
                 0, 0, command.attachments());
     }
 
@@ -83,7 +92,7 @@ public class RequirementService {
             String userDescription,
             String aiDescription,
             String stage,
-            String currentDecompositionId,
+            String currentDecompositionNo,
             List<RequirementData.AttachmentData> attachments) {
     }
 }

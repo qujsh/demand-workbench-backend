@@ -56,6 +56,11 @@ public class MyBatisRequirementRepository implements RequirementRepository {
         return requirementMapper.findAll().stream().map(this::toData).toList();
     }
 
+    @Override
+    public boolean softDelete(String requirementNo) {
+        return requirementMapper.softDelete(requirementNo) == 1;
+    }
+
     private RequirementData findById(long id) {
         var record = requirementMapper.findById(id);
         if (record == null) {
@@ -87,7 +92,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
         record.setUserDescription(data.userDescription());
         record.setAiDescription(data.aiDescription());
         record.setStage(data.stage());
-        record.setCurrentDecompositionNo(data.currentDecompositionId());
+        record.setCurrentDecompositionNo(data.currentDecompositionNo());
         return record;
     }
 
