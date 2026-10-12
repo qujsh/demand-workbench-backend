@@ -37,12 +37,13 @@ CREATE TABLE work_item (
     end_date DATE COMMENT '计划结束日期',
     dependency_text VARCHAR(500) COMMENT '依赖说明',
     sort_order INT NOT NULL COMMENT '树节点排序序号',
+    deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
     created_at DATETIME(3) NOT NULL COMMENT '创建时间',
     updated_at DATETIME(3) NOT NULL COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE INDEX uk_work_item_no (work_item_no),
-    INDEX idx_work_item_decomposition_order (decomposition_id, sort_order),
-    INDEX idx_work_item_parent (parent_id)
+    INDEX idx_work_item_decomposition_order (decomposition_id, deleted, sort_order),
+    INDEX idx_work_item_parent (parent_id, deleted)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci

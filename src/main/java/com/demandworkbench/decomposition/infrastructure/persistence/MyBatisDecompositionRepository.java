@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +100,13 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         var errorCode = DecompositionErrorCode.SERVER_RESTARTED;
         return decompositionMapper.failInterruptedTasks(TaskStatus.FAILED.getCode(), TaskStage.FAILED.getCode(),
                 errorCode.getCode(), errorCode.getMsg(), TaskStatus.QUEUED.getCode(), TaskStatus.PROCESSING.getCode());
+    }
+
+    @Override
+    @Transactional
+    public int deleteWorkItems(List<String> workItemNos) {
+        var ids = workItemMapper.findIdsIncludingDescendants(workItemNos);
+        return ids.isEmpty() ? 0 : workItemMapper.softDeleteByIds(ids);
     }
 
     private void persist(String taskId, long decompositionId, Long parentId,

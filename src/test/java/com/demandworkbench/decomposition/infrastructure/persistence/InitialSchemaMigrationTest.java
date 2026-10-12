@@ -95,6 +95,31 @@ class InitialSchemaMigrationTest {
         }
 
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
+             var statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    WITH RECURSIVE descendants AS (
+                        SELECT id FROM work_item WHERE deleted = 0 AND work_item_no = 'WORK-1'
+                        UNION ALL
+                        SELECT child.id
+                        FROM work_item child
+                        JOIN descendants parent ON child.parent_id = parent.id
+                        WHERE child.deleted = 0
+                    )
+                    UPDATE work_item
+                    SET deleted = 1, updated_at = CURRENT_TIMESTAMP(3)
+                    WHERE id IN (SELECT id FROM descendants)
+                    """);
+            try (var result = statement.executeQuery("""
+                    SELECT COUNT(*) AS visible_count
+                    FROM work_item
+                    WHERE decomposition_id = %d AND deleted = 0
+                    """.formatted(decompositionId))) {
+                assertThat(result.next()).isTrue();
+                assertThat(result.getInt("visible_count")).isZero();
+            }
+        }
+
+        try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
              var statement = connection.createStatement();
              var constraints = statement.executeQuery("""
                      SELECT COUNT(*) AS constraint_count
@@ -116,7 +141,7 @@ class InitialSchemaMigrationTest {
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(50);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(51);
         }
     }
 }

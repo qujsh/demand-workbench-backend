@@ -34,9 +34,9 @@ public interface RequirementMapper {
     @Select("""
         SELECT r.*, d.decomposition_no AS current_decomposition_no,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type = 'module') AS module_count,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
         WHERE r.id = #{id} AND r.deleted = 0
@@ -46,9 +46,9 @@ public interface RequirementMapper {
     @Select("""
         SELECT r.*, d.decomposition_no AS current_decomposition_no,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type = 'module') AS module_count,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
         WHERE r.requirement_no = #{requirementNo} AND r.deleted = 0
@@ -58,9 +58,9 @@ public interface RequirementMapper {
     @Select("""
         SELECT r.*, d.decomposition_no AS current_decomposition_no,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type = 'module') AS module_count,
                (SELECT COUNT(*) FROM work_item w
-                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.deleted = 0 AND w.type IN ('work', 'subtask')) AS work_item_count
         FROM requirement r
         LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
         WHERE r.deleted = 0
