@@ -44,6 +44,8 @@ class InitialSchemaMigrationTest {
              var result = statement.executeQuery("SELECT version FROM flyway_schema_history WHERE success = 1")) {
             assertThat(result.next()).isTrue();
             assertThat(result.getString("version")).isEqualTo("1");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("version")).isEqualTo("2");
             assertThat(result.next()).isFalse();
         }
 

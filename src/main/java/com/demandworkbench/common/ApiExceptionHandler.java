@@ -2,6 +2,9 @@ package com.demandworkbench.common;
 
 import com.demandworkbench.decomposition.application.DecompositionException;
 import com.demandworkbench.decomposition.application.DecompositionErrorCode;
+import com.demandworkbench.requirement.application.RequirementException;
+import com.demandworkbench.requirement.application.RequirementErrorCode;
+import com.demandworkbench.requirement.controller.request.SaveRequirementRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,11 +23,29 @@ public class ApiExceptionHandler {
                 .body(ApiResponse.failure(errorCode.getCode(), exception.getMessage()));
     }
 
+    @ExceptionHandler(RequirementException.class)
+    ResponseEntity<ApiResponse<Void>> handleRequirement(RequirementException exception) {
+        var errorCode = exception.getErrorCode();
+        var status = switch (errorCode) {
+            case INVALID_REQUIREMENT -> HttpStatus.BAD_REQUEST;
+            case REQUIREMENT_NOT_FOUND, DECOMPOSITION_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case DECOMPOSITION_NOT_COMPLETED -> HttpStatus.CONFLICT;
+            case REQUIREMENT_SAVE_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+        return ResponseEntity.status(status)
+                .body(ApiResponse.failure(errorCode.getCode(), exception.getMessage()));
+    }
+
     @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
     ResponseEntity<ApiResponse<Void>> handleValidation(Exception exception) {
         var message = exception instanceof MethodArgumentNotValidException validation
                 ? validation.getBindingResult().getAllErrors().getFirst().getDefaultMessage()
                 : exception.getMessage();
+        if (exception instanceof MethodArgumentNotValidException validation
+                && validation.getBindingResult().getTarget() instanceof SaveRequirementRequest) {
+            var errorCode = RequirementErrorCode.INVALID_REQUIREMENT;
+            return ResponseEntity.badRequest().body(ApiResponse.failure(errorCode.getCode(), message));
+        }
         var errorCode = DecompositionErrorCode.INVALID_CONTENT;
         return ResponseEntity.badRequest().body(ApiResponse.failure(errorCode.getCode(), message));
     }
