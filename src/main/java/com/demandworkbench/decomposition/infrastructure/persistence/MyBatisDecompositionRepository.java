@@ -29,7 +29,7 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
     @Override
     public void create(String id, String content, String model, String promptVersion, LocalDateTime createdAt) {
         var record = new DecompositionRecord();
-        record.setId(id);
+        record.setDecompositionNo(id);
         record.setSourceContent(content);
         record.setStatus(TaskStatus.QUEUED.getCode());
         record.setStage(TaskStage.QUEUED.getCode());
@@ -47,9 +47,11 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
     @Override
     @Transactional
     public void complete(String id, WorkItemGenerator.GenerationResult result) {
-        workItemMapper.deleteByDecompositionId(id);
+        var decomposition = decompositionMapper.findByDecompositionNo(id);
+        if (decomposition == null) return;
+        workItemMapper.deleteByDecompositionId(decomposition.getId());
         var order = new AtomicInteger();
-        for (var module : result.tree().modules()) persist(id, null, module, order);
+        for (var module : result.tree().modules()) persist(id, decomposition.getId(), null, module, order);
         decompositionMapper.markSuccess(id, TaskStatus.SUCCESS.getCode(), TaskStage.COMPLETED.getCode(),
                 result.rawResponse(), result.promptTokens(), result.completionTokens());
     }
@@ -62,12 +64,12 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
 
     @Override
     public TaskSnapshot find(String id) {
-        var record = decompositionMapper.findById(id);
+        var record = decompositionMapper.findByDecompositionNo(id);
         if (record == null) return null;
         var errorCode = record.getErrorCode() == null
                 ? null
                 : DecompositionErrorCode.fromCode(record.getErrorCode());
-        return new TaskSnapshot(record.getId(), TaskStatus.fromCode(record.getStatus()),
+        return new TaskSnapshot(record.getDecompositionNo(), TaskStatus.fromCode(record.getStatus()),
                 TaskStage.fromCode(record.getStage()), errorCode,
                 record.getErrorMessage(),
                 record.getCreatedAt(), record.getCompletedAt());
@@ -75,8 +77,10 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
 
     @Override
     public WorkItemTree findTree(String id) {
-        var records = workItemMapper.findByDecompositionId(id);
-        Map<String, WorkItemNode> nodes = new LinkedHashMap<>();
+        var decomposition = decompositionMapper.findByDecompositionNo(id);
+        if (decomposition == null) return new WorkItemTree(new ArrayList<>());
+        var records = workItemMapper.findByDecompositionId(decomposition.getId());
+        Map<Long, WorkItemNode> nodes = new LinkedHashMap<>();
         for (var record : records) nodes.put(record.getId(), toNode(record));
         var roots = new ArrayList<WorkItemNode>();
         for (var record : records) {
@@ -97,12 +101,13 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
                 errorCode.getCode(), errorCode.getMsg(), TaskStatus.QUEUED.getCode(), TaskStatus.PROCESSING.getCode());
     }
 
-    private void persist(String taskId, String parentId, WorkItemNode node, AtomicInteger order) {
+    private void persist(String taskId, long decompositionId, Long parentId,
+                         WorkItemNode node, AtomicInteger order) {
         var persistedId = taskId + "-" + node.id();
         var now = LocalDateTime.now();
         var record = new WorkItemRecord();
-        record.setId(persistedId);
-        record.setDecompositionId(taskId);
+        record.setWorkItemNo(persistedId);
+        record.setDecompositionId(decompositionId);
         record.setParentId(parentId);
         record.setType(node.type().getCode());
         record.setName(node.name());
@@ -117,11 +122,11 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         record.setCreatedAt(now);
         record.setUpdatedAt(now);
         workItemMapper.insert(record);
-        for (var child : node.children()) persist(taskId, persistedId, child, order);
+        for (var child : node.children()) persist(taskId, decompositionId, record.getId(), child, order);
     }
 
     private WorkItemNode toNode(WorkItemRecord record) {
-        return new WorkItemNode(record.getId(), WorkItemType.fromCode(record.getType()), record.getName(),
+        return new WorkItemNode(record.getWorkItemNo(), WorkItemType.fromCode(record.getType()), record.getName(),
                 record.getDescription(), record.getStatus(), record.getRoleName(), record.getPriority(),
                 record.getStartDate(), record.getEndDate(), record.getDependencyText(), new ArrayList<>());
     }

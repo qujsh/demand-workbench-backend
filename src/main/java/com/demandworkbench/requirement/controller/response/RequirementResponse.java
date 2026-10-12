@@ -13,11 +13,14 @@ public record RequirementResponse(
         String currentDecompositionId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
+        int moduleCount,
+        int workItemCount,
         List<AttachmentResponse> attachments) {
 
     public static RequirementResponse from(RequirementData data) {
         return new RequirementResponse(data.requirementNo(), data.title(), data.userDescription(),
                 data.aiDescription(), data.stage(), data.currentDecompositionId(), data.createdAt(), data.updatedAt(),
+                data.moduleCount(), data.workItemCount(),
                 data.attachments().stream().map(AttachmentResponse::from).toList());
     }
 

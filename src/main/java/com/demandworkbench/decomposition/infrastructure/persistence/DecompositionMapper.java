@@ -9,28 +9,30 @@ import org.apache.ibatis.annotations.Update;
 public interface DecompositionMapper {
     @Insert("""
         INSERT INTO decomposition_record
-        (id, source_content, status, stage, model, prompt_version, created_at)
-        VALUES (#{id}, #{sourceContent}, #{status}, #{stage}, #{model}, #{promptVersion}, #{createdAt})
+        (decomposition_no, source_content, status, stage, model, prompt_version, created_at)
+        VALUES (#{decompositionNo}, #{sourceContent}, #{status}, #{stage}, #{model}, #{promptVersion}, #{createdAt})
         """)
     void insert(DecompositionRecord record);
 
-    @Select("SELECT * FROM decomposition_record WHERE id = #{id}")
-    DecompositionRecord findById(String id);
+    @Select("SELECT * FROM decomposition_record WHERE decomposition_no = #{decompositionNo}")
+    DecompositionRecord findByDecompositionNo(String decompositionNo);
 
     @Update("""
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, started_at = COALESCE(started_at, CURRENT_TIMESTAMP(3))
-        WHERE id = #{id}
+        WHERE decomposition_no = #{decompositionNo}
         """)
-    void updateStage(@Param("id") String id, @Param("status") String status, @Param("stage") String stage);
+    void updateStage(@Param("decompositionNo") String decompositionNo,
+                     @Param("status") String status, @Param("stage") String stage);
 
     @Update("""
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, raw_response = #{rawResponse},
             prompt_tokens = #{promptTokens}, completion_tokens = #{completionTokens}, completed_at = CURRENT_TIMESTAMP(3)
-        WHERE id = #{id}
+        WHERE decomposition_no = #{decompositionNo}
         """)
-    void markSuccess(@Param("id") String id, @Param("status") String status, @Param("stage") String stage,
+    void markSuccess(@Param("decompositionNo") String decompositionNo,
+                     @Param("status") String status, @Param("stage") String stage,
                      @Param("rawResponse") String rawResponse,
                      @Param("promptTokens") Integer promptTokens, @Param("completionTokens") Integer completionTokens);
 
@@ -38,9 +40,10 @@ public interface DecompositionMapper {
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, error_code = #{errorCode}, error_message = #{errorMessage},
             completed_at = CURRENT_TIMESTAMP(3)
-        WHERE id = #{id}
+        WHERE decomposition_no = #{decompositionNo}
         """)
-    void markFailed(@Param("id") String id, @Param("status") String status, @Param("stage") String stage,
+    void markFailed(@Param("decompositionNo") String decompositionNo,
+                    @Param("status") String status, @Param("stage") String stage,
                     @Param("errorCode") String errorCode, @Param("errorMessage") String errorMessage);
 
     @Update("""

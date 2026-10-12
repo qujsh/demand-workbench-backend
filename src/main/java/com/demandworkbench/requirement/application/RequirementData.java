@@ -14,6 +14,8 @@ public record RequirementData(
         String currentDecompositionId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
+        int moduleCount,
+        int workItemCount,
         List<AttachmentData> attachments) {
 
     public record AttachmentData(

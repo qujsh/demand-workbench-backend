@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DecompositionRecord {
-    private String id;
+    private Long id;
+    private String decompositionNo;
     private String sourceContent;
     private String status;
     private String stage;

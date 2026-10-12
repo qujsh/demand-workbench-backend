@@ -14,7 +14,10 @@ public class RequirementRecord {
     private String userDescription;
     private String aiDescription;
     private String stage;
-    private String currentDecompositionId;
+    private Long currentDecompositionId;
+    private String currentDecompositionNo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private int moduleCount;
+    private int workItemCount;
 }

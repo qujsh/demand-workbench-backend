@@ -1,5 +1,6 @@
 CREATE TABLE decomposition_record (
-    id VARCHAR(40) PRIMARY KEY COMMENT '拆解任务编号',
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '拆解任务内部主键',
+    decomposition_no VARCHAR(40) NOT NULL COMMENT '对外拆解任务编号',
     source_content LONGTEXT NOT NULL COMMENT '待拆解的原始需求内容',
     status VARCHAR(24) NOT NULL COMMENT '任务状态编码',
     stage VARCHAR(32) NOT NULL COMMENT '当前处理阶段编码',
@@ -13,6 +14,8 @@ CREATE TABLE decomposition_record (
     created_at DATETIME(3) NOT NULL COMMENT '任务创建时间',
     started_at DATETIME(3) COMMENT '任务开始处理时间',
     completed_at DATETIME(3) COMMENT '任务完成时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_decomposition_no (decomposition_no),
     INDEX idx_decomposition_status_created (status, created_at)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
@@ -20,9 +23,10 @@ CREATE TABLE decomposition_record (
   COMMENT='需求拆解任务记录';
 
 CREATE TABLE work_item (
-    id VARCHAR(40) PRIMARY KEY COMMENT '工作项编号',
-    decomposition_id VARCHAR(40) NOT NULL COMMENT '所属拆解任务编号',
-    parent_id VARCHAR(40) COMMENT '父工作项编号，根节点为空',
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '工作项内部主键',
+    work_item_no VARCHAR(96) NOT NULL COMMENT '对外工作项编号',
+    decomposition_id BIGINT UNSIGNED NOT NULL COMMENT '所属拆解任务内部主键',
+    parent_id BIGINT UNSIGNED COMMENT '父工作项内部主键，根节点为空',
     type VARCHAR(16) NOT NULL COMMENT '工作项类型编码',
     name VARCHAR(255) NOT NULL COMMENT '工作项名称',
     description TEXT COMMENT '工作项描述',
@@ -35,6 +39,8 @@ CREATE TABLE work_item (
     sort_order INT NOT NULL COMMENT '树节点排序序号',
     created_at DATETIME(3) NOT NULL COMMENT '创建时间',
     updated_at DATETIME(3) NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_work_item_no (work_item_no),
     INDEX idx_work_item_decomposition_order (decomposition_id, sort_order),
     INDEX idx_work_item_parent (parent_id)
 ) ENGINE=InnoDB

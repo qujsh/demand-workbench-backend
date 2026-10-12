@@ -33,7 +33,7 @@ class RequirementServiceTest {
     @Test
     void shouldKeepExistingNumberAndTitleCodeWhenTitleChanges() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "旧标题", "", "",
-                "analyzing", null, LocalDateTime.now(), LocalDateTime.now(), List.of());
+                "analyzing", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
         when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
         when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 

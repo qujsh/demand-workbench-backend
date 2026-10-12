@@ -8,9 +8,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WorkItemRecord {
-    private String id;
-    private String decompositionId;
-    private String parentId;
+    private Long id;
+    private String workItemNo;
+    private Long decompositionId;
+    private Long parentId;
     private String type;
     private String name;
     private String description;

@@ -87,7 +87,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
         record.setUserDescription(data.userDescription());
         record.setAiDescription(data.aiDescription());
         record.setStage(data.stage());
-        record.setCurrentDecompositionId(data.currentDecompositionId());
+        record.setCurrentDecompositionNo(data.currentDecompositionId());
         return record;
     }
 
@@ -98,6 +98,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
                 .toList();
         return new RequirementData(record.getId(), record.getRequirementNo(), record.getTitleCode(),
                 record.getTitle(), record.getUserDescription(), record.getAiDescription(), record.getStage(),
-                record.getCurrentDecompositionId(), record.getCreatedAt(), record.getUpdatedAt(), attachments);
+                record.getCurrentDecompositionNo(), record.getCreatedAt(), record.getUpdatedAt(),
+                record.getModuleCount(), record.getWorkItemCount(), attachments);
     }
 }

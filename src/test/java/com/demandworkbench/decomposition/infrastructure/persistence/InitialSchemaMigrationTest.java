@@ -24,29 +24,74 @@ class InitialSchemaMigrationTest {
                 .load()
                 .migrate();
 
+        long decompositionId;
+        long parentId;
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
              var statement = connection.createStatement()) {
             statement.executeUpdate("""
                     INSERT INTO decomposition_record
-                    (id, source_content, status, stage, prompt_version, error_code, created_at)
+                    (decomposition_no, source_content, status, stage, prompt_version, error_code, created_at)
                     VALUES ('DEC-1', 'test', 'failed', 'failed', 'v1', 'S048101004', CURRENT_TIMESTAMP(3))
                     """);
+            try (var result = statement.executeQuery(
+                    "SELECT id FROM decomposition_record WHERE decomposition_no = 'DEC-1'")) {
+                assertThat(result.next()).isTrue();
+                decompositionId = result.getLong("id");
+            }
             statement.executeUpdate("""
                     INSERT INTO work_item
-                    (id, decomposition_id, type, name, status, priority, sort_order, created_at, updated_at)
-                    VALUES ('WORK-1', 'DEC-NOT-EXISTS', 'work', 'test', '未开始', 'high', 1,
+                    (work_item_no, decomposition_id, type, name, status, priority, sort_order, created_at, updated_at)
+                    VALUES ('WORK-1', %d, 'work', 'test', '未开始', 'high', 1,
                             CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
-                    """);
+                    """.formatted(decompositionId));
+            try (var result = statement.executeQuery(
+                    "SELECT id FROM work_item WHERE work_item_no = 'WORK-1'")) {
+                assertThat(result.next()).isTrue();
+                parentId = result.getLong("id");
+            }
+            statement.executeUpdate("""
+                    INSERT INTO work_item
+                    (work_item_no, decomposition_id, parent_id, type, name, status, priority, sort_order, created_at, updated_at)
+                    VALUES ('SUB-1', %d, %d, 'subtask', 'child', '未开始', 'high', 2,
+                            CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+                    """.formatted(decompositionId, parentId));
+            statement.executeUpdate("""
+                    INSERT INTO requirement
+                    (requirement_no, title_code, title, stage, current_decomposition_id)
+                    VALUES ('REQ-CS-000001', 'CS', '测试需求', 'analyzing', %d)
+                    """.formatted(decompositionId));
         }
 
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
              var statement = connection.createStatement();
              var result = statement.executeQuery("SELECT version FROM flyway_schema_history WHERE success = 1")) {
             assertThat(result.next()).isTrue();
-            assertThat(result.getString("version")).isEqualTo("1");
+            assertThat(result.getString("version")).isEqualTo("202610120100");
             assertThat(result.next()).isTrue();
-            assertThat(result.getString("version")).isEqualTo("2");
+            assertThat(result.getString("version")).isEqualTo("202610120110");
             assertThat(result.next()).isFalse();
+        }
+
+        try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
+             var statement = connection.createStatement();
+             var records = statement.executeQuery("""
+                     SELECT d.id AS decomposition_pk, d.decomposition_no,
+                            w.id AS work_item_pk, w.work_item_no, w.parent_id,
+                            p.work_item_no AS parent_work_item_no,
+                            r.requirement_no
+                     FROM decomposition_record d
+                     JOIN work_item w ON w.decomposition_id = d.id
+                     LEFT JOIN work_item p ON p.id = w.parent_id
+                     JOIN requirement r ON r.current_decomposition_id = d.id
+                     WHERE w.work_item_no = 'SUB-1'
+                     """)) {
+            assertThat(records.next()).isTrue();
+            assertThat(records.getLong("decomposition_pk")).isPositive();
+            assertThat(records.getString("decomposition_no")).isEqualTo("DEC-1");
+            assertThat(records.getLong("work_item_pk")).isPositive();
+            assertThat(records.getString("work_item_no")).isEqualTo("SUB-1");
+            assertThat(records.getString("parent_work_item_no")).isEqualTo("WORK-1");
+            assertThat(records.getString("requirement_no")).isEqualTo("REQ-CS-000001");
         }
 
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
@@ -67,11 +112,11 @@ class InitialSchemaMigrationTest {
                      SELECT COUNT(*) AS documented_columns
                      FROM information_schema.columns
                      WHERE table_schema = DATABASE()
-                       AND table_name IN ('decomposition_record', 'work_item')
+                       AND table_name IN ('decomposition_record', 'work_item', 'requirement', 'requirement_attachment')
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(29);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(49);
         }
     }
 }

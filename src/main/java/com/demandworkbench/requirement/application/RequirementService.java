@@ -62,7 +62,7 @@ public class RequirementService {
                                    SaveCommand command) {
         return new RequirementData(id, requirementNo, titleCode, command.title(), command.userDescription(),
                 command.aiDescription(), stage, command.currentDecompositionId(), null, null,
-                command.attachments());
+                0, 0, command.attachments());
     }
 
     private void validateDecomposition(String decompositionId) {

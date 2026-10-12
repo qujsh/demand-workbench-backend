@@ -13,7 +13,8 @@ public interface RequirementMapper {
         INSERT INTO requirement
         (title_code, title, user_description, ai_description, stage, current_decomposition_id)
         VALUES
-        (#{titleCode}, #{title}, #{userDescription}, #{aiDescription}, #{stage}, #{currentDecompositionId})
+        (#{titleCode}, #{title}, #{userDescription}, #{aiDescription}, #{stage},
+         (SELECT id FROM decomposition_record WHERE decomposition_no = #{currentDecompositionNo}))
         """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(RequirementRecord record);
@@ -24,17 +25,45 @@ public interface RequirementMapper {
     @Update("""
         UPDATE requirement
         SET title = #{title}, user_description = #{userDescription}, ai_description = #{aiDescription},
-            stage = #{stage}, current_decomposition_id = #{currentDecompositionId}
+            stage = #{stage}, current_decomposition_id =
+                (SELECT id FROM decomposition_record WHERE decomposition_no = #{currentDecompositionNo})
         WHERE id = #{id}
         """)
     int update(RequirementRecord record);
 
-    @Select("SELECT * FROM requirement WHERE id = #{id}")
+    @Select("""
+        SELECT r.*, d.decomposition_no AS current_decomposition_no,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+        FROM requirement r
+        LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
+        WHERE r.id = #{id}
+        """)
     RequirementRecord findById(long id);
 
-    @Select("SELECT * FROM requirement WHERE requirement_no = #{requirementNo}")
+    @Select("""
+        SELECT r.*, d.decomposition_no AS current_decomposition_no,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+        FROM requirement r
+        LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
+        WHERE r.requirement_no = #{requirementNo}
+        """)
     RequirementRecord findByRequirementNo(String requirementNo);
 
-    @Select("SELECT * FROM requirement ORDER BY updated_at DESC, id DESC")
+    @Select("""
+        SELECT r.*, d.decomposition_no AS current_decomposition_no,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type = 'module') AS module_count,
+               (SELECT COUNT(*) FROM work_item w
+                WHERE w.decomposition_id = r.current_decomposition_id AND w.type IN ('work', 'subtask')) AS work_item_count
+        FROM requirement r
+        LEFT JOIN decomposition_record d ON d.id = r.current_decomposition_id
+        ORDER BY r.updated_at DESC, r.id DESC
+        """)
     List<RequirementRecord> findAll();
 }

@@ -6,7 +6,7 @@ CREATE TABLE requirement (
     user_description LONGTEXT COMMENT '用户填写的原始需求描述',
     ai_description LONGTEXT COMMENT '人工确认后的 AI 需求描述',
     stage VARCHAR(24) NOT NULL COMMENT '需求当前阶段编码',
-    current_decomposition_id VARCHAR(40) COMMENT '当前采用的需求拆解任务编号',
+    current_decomposition_id BIGINT UNSIGNED COMMENT '当前采用的拆解任务内部主键',
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
