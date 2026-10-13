@@ -26,11 +26,20 @@ public class SpringAiPublishSummaryGenerator implements PublishSummaryGenerator 
     }
 
     @Override
-    public Flux<String> generate(String requirementText) {
+    public Flux<String> generate(String userDescription, String confirmedAnalysis) {
         return chatClient.prompt()
                 .system(systemPrompt)
-                .user(user -> user.text("请生成以下需求的发布任务简介：\n\n{requirement}")
-                        .param("requirement", requirementText))
+                .user(user -> user.text("""
+                                请根据以下内容生成发布任务简介。
+
+                                【用户原始需求（范围判断基准）】
+                                {userDescription}
+
+                                【已确认需求分析（仅用于补充核心范围）】
+                                {confirmedAnalysis}
+                                """)
+                        .param("userDescription", userDescription)
+                        .param("confirmedAnalysis", confirmedAnalysis))
                 .stream()
                 .content();
     }

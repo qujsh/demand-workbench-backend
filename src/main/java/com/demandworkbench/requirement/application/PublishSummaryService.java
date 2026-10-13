@@ -1,13 +1,16 @@
 package com.demandworkbench.requirement.application;
 
 import com.demandworkbench.requirement.domain.type.PublishSummaryStatus;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 @Service
 public class PublishSummaryService {
-    public static final String PROMPT_VERSION = "publish-summary-v1";
+    public static final String PROMPT_VERSION = "publish-summary-v2";
+    private static final Pattern NON_CONFIRMED_SECTION = Pattern.compile(
+            "(?m)^#{1,6}\\s*(?:\\d+[.、]\\s*)?(?:可选|技术风险).*$");
 
     private final RequirementRepository repository;
     private final PublishSummaryGenerator generator;
@@ -39,23 +42,32 @@ public class PublishSummaryService {
             }
 
             var requirement = repository.findByRequirementNo(requirementNo);
-            var source = StringUtils.hasText(requirement.aiDescription())
-                    ? requirement.aiDescription()
-                    : requirement.userDescription();
-            if (!StringUtils.hasText(source)) {
+            var userDescription = requirement.userDescription();
+            var confirmedAnalysis = extractConfirmedAnalysis(requirement.aiDescription());
+            if (!StringUtils.hasText(userDescription) && !StringUtils.hasText(confirmedAnalysis)) {
                 return Flux.error(new RequirementException(RequirementErrorCode.PUBLISH_SUMMARY_SOURCE_EMPTY));
             }
 
             repository.updatePublishSummaryStatus(
                     requirementNo, PublishSummaryStatus.GENERATING.getCode(), PROMPT_VERSION);
             var content = new StringBuilder();
-            return generator.generate(source)
+            return generator.generate(nullToEmpty(userDescription), confirmedAnalysis)
                     .filter(StringUtils::hasLength)
                     .doOnNext(content::append)
                     .doOnComplete(() -> saveCompleted(requirementNo, content.toString()))
                     .doOnError(error -> repository.updatePublishSummaryStatus(
                             requirementNo, PublishSummaryStatus.FAILED.getCode(), PROMPT_VERSION));
         });
+    }
+
+    private String extractConfirmedAnalysis(String analysis) {
+        if (!StringUtils.hasText(analysis)) return "";
+        var matcher = NON_CONFIRMED_SECTION.matcher(analysis);
+        return (matcher.find() ? analysis.substring(0, matcher.start()) : analysis).trim();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void saveCompleted(String requirementNo, String content) {
