@@ -70,7 +70,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
     }
 
     private void replaceAttachments(long requirementId, List<RequirementData.AttachmentData> attachments) {
-        attachmentMapper.deleteByRequirementId(requirementId);
+        attachmentMapper.softDeleteByRequirementId(requirementId);
         for (var attachment : attachments) {
             var record = new RequirementAttachmentRecord();
             record.setRequirementId(requirementId);

@@ -141,7 +141,20 @@ class InitialSchemaMigrationTest {
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(51);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(55);
+        }
+
+        try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
+             var statement = connection.createStatement();
+             var commonFields = statement.executeQuery("""
+                     SELECT COUNT(*) AS common_field_count
+                     FROM information_schema.columns
+                     WHERE table_schema = DATABASE()
+                       AND table_name IN ('decomposition_record', 'work_item', 'requirement', 'requirement_attachment')
+                       AND column_name IN ('deleted', 'created_at', 'updated_at')
+                     """)) {
+            assertThat(commonFields.next()).isTrue();
+            assertThat(commonFields.getInt("common_field_count")).isEqualTo(12);
         }
     }
 }

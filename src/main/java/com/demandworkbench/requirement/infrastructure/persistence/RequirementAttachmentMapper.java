@@ -1,10 +1,10 @@
 package com.demandworkbench.requirement.infrastructure.persistence;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface RequirementAttachmentMapper {
@@ -18,11 +18,15 @@ public interface RequirementAttachmentMapper {
 
     @Select("""
         SELECT * FROM requirement_attachment
-        WHERE requirement_id = #{requirementId}
+        WHERE requirement_id = #{requirementId} AND deleted = 0
         ORDER BY sort_order ASC, id ASC
         """)
     List<RequirementAttachmentRecord> findByRequirementId(long requirementId);
 
-    @Delete("DELETE FROM requirement_attachment WHERE requirement_id = #{requirementId}")
-    void deleteByRequirementId(long requirementId);
+    @Update("""
+        UPDATE requirement_attachment
+        SET deleted = 1
+        WHERE requirement_id = #{requirementId} AND deleted = 0
+        """)
+    void softDeleteByRequirementId(long requirementId);
 }

@@ -216,6 +216,10 @@ POST /api/v1/requirements/delete?requirementId=REQ-024
 - 表和字段必须使用数据库原生中文 `COMMENT` 说明业务含义。
 - 中文注释应描述字段业务含义，不重复字段名，不写临时开发说明。
 - 删除主记录时，Repository 必须在同一业务操作中显式处理关联记录，不得依赖数据库级联删除。
+- 所有业务表必须默认包含 `deleted`、`created_at`、`updated_at` 三个公共字段；确需例外时必须在迁移文件和代码评审中说明原因。
+- `deleted` 统一使用 `TINYINT UNSIGNED NOT NULL DEFAULT 0`，`0` 表示未删除，`1` 表示已删除；业务删除默认采用软删除，不直接物理移除记录。
+- `created_at` 和 `updated_at` 统一使用 `DATETIME(3)`，默认值为 `CURRENT_TIMESTAMP(3)`；`updated_at` 必须配置 `ON UPDATE CURRENT_TIMESTAMP(3)`。
+- 普通业务查询、统计和逻辑关联必须显式包含 `deleted = 0`；后台恢复、审计或内部重建流程需要读取或物理清理已删除数据时，应使用语义明确的独立 Mapper 方法。
 
 ### 7.3 SQL 与 MyBatis
 

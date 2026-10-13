@@ -11,12 +11,15 @@ CREATE TABLE decomposition_record (
     error_message VARCHAR(500) COMMENT '任务失败说明',
     prompt_tokens INT COMMENT '输入 Token 数量',
     completion_tokens INT COMMENT '输出 Token 数量',
-    created_at DATETIME(3) NOT NULL COMMENT '任务创建时间',
     started_at DATETIME(3) COMMENT '任务开始处理时间',
     completed_at DATETIME(3) COMMENT '任务完成时间',
+    deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '任务创建时间',
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+        ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE INDEX uk_decomposition_no (decomposition_no),
-    INDEX idx_decomposition_status_created (status, created_at)
+    INDEX idx_decomposition_status_created (deleted, status, created_at)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
@@ -38,8 +41,9 @@ CREATE TABLE work_item (
     dependency_text VARCHAR(500) COMMENT '依赖说明',
     sort_order INT NOT NULL COMMENT '树节点排序序号',
     deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
-    created_at DATETIME(3) NOT NULL COMMENT '创建时间',
-    updated_at DATETIME(3) NOT NULL COMMENT '更新时间',
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+        ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE INDEX uk_work_item_no (work_item_no),
     INDEX idx_work_item_decomposition_order (decomposition_id, deleted, sort_order),

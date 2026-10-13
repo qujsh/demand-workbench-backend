@@ -14,13 +14,13 @@ public interface DecompositionMapper {
         """)
     void insert(DecompositionRecord record);
 
-    @Select("SELECT * FROM decomposition_record WHERE decomposition_no = #{decompositionNo}")
+    @Select("SELECT * FROM decomposition_record WHERE decomposition_no = #{decompositionNo} AND deleted = 0")
     DecompositionRecord findByDecompositionNo(String decompositionNo);
 
     @Update("""
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, started_at = COALESCE(started_at, CURRENT_TIMESTAMP(3))
-        WHERE decomposition_no = #{decompositionNo}
+        WHERE decomposition_no = #{decompositionNo} AND deleted = 0
         """)
     void updateStage(@Param("decompositionNo") String decompositionNo,
                      @Param("status") String status, @Param("stage") String stage);
@@ -29,7 +29,7 @@ public interface DecompositionMapper {
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, raw_response = #{rawResponse},
             prompt_tokens = #{promptTokens}, completion_tokens = #{completionTokens}, completed_at = CURRENT_TIMESTAMP(3)
-        WHERE decomposition_no = #{decompositionNo}
+        WHERE decomposition_no = #{decompositionNo} AND deleted = 0
         """)
     void markSuccess(@Param("decompositionNo") String decompositionNo,
                      @Param("status") String status, @Param("stage") String stage,
@@ -40,7 +40,7 @@ public interface DecompositionMapper {
         UPDATE decomposition_record
         SET status = #{status}, stage = #{stage}, error_code = #{errorCode}, error_message = #{errorMessage},
             completed_at = CURRENT_TIMESTAMP(3)
-        WHERE decomposition_no = #{decompositionNo}
+        WHERE decomposition_no = #{decompositionNo} AND deleted = 0
         """)
     void markFailed(@Param("decompositionNo") String decompositionNo,
                     @Param("status") String status, @Param("stage") String stage,
@@ -50,7 +50,7 @@ public interface DecompositionMapper {
         UPDATE decomposition_record
         SET status = #{failedStatus}, stage = #{failedStage}, error_code = #{errorCode},
             error_message = #{errorMessage}, completed_at = CURRENT_TIMESTAMP(3)
-        WHERE status IN (#{queuedStatus}, #{processingStatus})
+        WHERE deleted = 0 AND status IN (#{queuedStatus}, #{processingStatus})
         """)
     int failInterruptedTasks(@Param("failedStatus") String failedStatus, @Param("failedStage") String failedStage,
                              @Param("errorCode") String errorCode, @Param("errorMessage") String errorMessage,

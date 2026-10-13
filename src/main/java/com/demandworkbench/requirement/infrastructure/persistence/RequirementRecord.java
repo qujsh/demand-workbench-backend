@@ -16,6 +16,7 @@ public class RequirementRecord {
     private String stage;
     private Long currentDecompositionId;
     private String currentDecompositionNo;
+    private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int moduleCount;

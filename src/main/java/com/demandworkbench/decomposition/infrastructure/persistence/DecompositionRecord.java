@@ -22,5 +22,7 @@ public class DecompositionRecord {
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
+    private boolean deleted;
+    private LocalDateTime updatedAt;
 
 }

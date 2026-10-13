@@ -29,9 +29,12 @@ CREATE TABLE requirement_attachment (
     content_type VARCHAR(128) COMMENT '附件媒体类型',
     file_size BIGINT UNSIGNED NOT NULL COMMENT '附件字节数',
     sort_order INT NOT NULL COMMENT '附件展示顺序',
+    deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+        ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (id),
-    INDEX idx_requirement_attachment_order (requirement_id, sort_order)
+    INDEX idx_requirement_attachment_order (requirement_id, deleted, sort_order)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci

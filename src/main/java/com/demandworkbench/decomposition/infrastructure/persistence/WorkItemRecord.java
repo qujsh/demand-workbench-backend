@@ -22,6 +22,7 @@ public class WorkItemRecord {
     private LocalDate endDate;
     private String dependencyText;
     private int sortOrder;
+    private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

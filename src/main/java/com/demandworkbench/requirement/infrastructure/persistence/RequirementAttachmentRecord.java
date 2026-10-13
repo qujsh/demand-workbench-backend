@@ -1,5 +1,6 @@
 package com.demandworkbench.requirement.infrastructure.persistence;
 
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,4 +14,7 @@ public class RequirementAttachmentRecord {
     private String contentType;
     private long fileSize;
     private int sortOrder;
+    private boolean deleted;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
