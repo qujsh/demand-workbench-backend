@@ -12,7 +12,9 @@ public enum DecompositionErrorCode {
     INVALID_MODEL_OUTPUT("S048101005", "模型返回结果无效"),
     DECOMPOSITION_FAILED("S048101006", "需求拆解失败"),
     SERVER_RESTARTED("S048101007", "服务重启导致任务中断"),
-    INTERNAL_ERROR("S048101008", "系统内部错误");
+    INTERNAL_ERROR("S048101008", "系统内部错误"),
+    WORK_ITEM_NOT_FOUND("S048101009", "工作项不存在"),
+    INVALID_WORK_ITEM_PARENT("S048101010", "工作项父子层级不正确");
 
     private final String code;
     private final String msg;

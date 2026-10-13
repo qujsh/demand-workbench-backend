@@ -2,6 +2,8 @@ package com.demandworkbench.decomposition.infrastructure.persistence;
 
 import com.demandworkbench.decomposition.application.DecompositionRepository;
 import com.demandworkbench.decomposition.application.DecompositionErrorCode;
+import com.demandworkbench.decomposition.application.DecompositionException;
+import com.demandworkbench.decomposition.application.WorkItemData;
 import com.demandworkbench.decomposition.application.WorkItemGenerator;
 import com.demandworkbench.decomposition.domain.model.WorkItemNode;
 import com.demandworkbench.decomposition.domain.model.WorkItemTree;
@@ -14,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,6 +110,62 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
     public int deleteWorkItems(List<String> workItemNos) {
         var ids = workItemMapper.findIdsIncludingDescendants(workItemNos);
         return ids.isEmpty() ? 0 : workItemMapper.softDeleteByIds(ids);
+    }
+
+    @Override
+    @Transactional
+    public WorkItemData saveWorkItem(WorkItemData data) {
+        var decomposition = decompositionMapper.findByDecompositionNo(data.decompositionNo());
+        if (decomposition == null) throw new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND);
+
+        if (data.workItemNo() != null && !data.workItemNo().isBlank()) {
+            var existing = workItemMapper.findByWorkItemNo(data.workItemNo());
+            if (existing == null || !existing.getDecompositionId().equals(decomposition.getId())) {
+                throw new DecompositionException(DecompositionErrorCode.WORK_ITEM_NOT_FOUND);
+            }
+            apply(existing, data);
+            workItemMapper.update(existing);
+            return toData(existing, data.decompositionNo(), data.parentWorkItemNo());
+        }
+
+        WorkItemRecord parent = null;
+        if (data.parentWorkItemNo() != null && !data.parentWorkItemNo().isBlank()) {
+            parent = workItemMapper.findByWorkItemNo(data.parentWorkItemNo());
+            if (parent == null || !parent.getDecompositionId().equals(decomposition.getId())
+                    || WorkItemType.fromCode(data.type()).getValue()
+                    != WorkItemType.fromCode(parent.getType()).getValue() + 1) {
+                throw new DecompositionException(DecompositionErrorCode.INVALID_WORK_ITEM_PARENT);
+            }
+        }
+        var record = new WorkItemRecord();
+        record.setWorkItemNo(data.decompositionNo() + "-MANUAL-" + UUID.randomUUID().toString().replace("-", ""));
+        record.setDecompositionId(decomposition.getId());
+        record.setParentId(parent == null ? null : parent.getId());
+        record.setType(data.type());
+        record.setSortOrder(workItemMapper.findMaxSortOrder(decomposition.getId()) + 1);
+        var now = LocalDateTime.now();
+        record.setCreatedAt(now);
+        record.setUpdatedAt(now);
+        apply(record, data);
+        workItemMapper.insert(record);
+        return toData(record, data.decompositionNo(), data.parentWorkItemNo());
+    }
+
+    private void apply(WorkItemRecord record, WorkItemData data) {
+        record.setName(data.name());
+        record.setDescription(data.description());
+        record.setStatus(data.status());
+        record.setRoleName(data.role());
+        record.setPriority(data.priority());
+        record.setStartDate(data.startDate());
+        record.setEndDate(data.endDate());
+        record.setDependencyText(data.dependency());
+    }
+
+    private WorkItemData toData(WorkItemRecord record, String decompositionNo, String parentWorkItemNo) {
+        return new WorkItemData(record.getWorkItemNo(), decompositionNo, parentWorkItemNo, record.getType(),
+                record.getName(), record.getDescription(), record.getStatus(), record.getRoleName(),
+                record.getPriority(), record.getStartDate(), record.getEndDate(), record.getDependencyText());
     }
 
     private void persist(String taskId, long decompositionId, Long parentId,

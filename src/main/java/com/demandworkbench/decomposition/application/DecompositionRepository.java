@@ -15,6 +15,7 @@ public interface DecompositionRepository {
     WorkItemTree findTree(String id);
     int failInterruptedTasks();
     int deleteWorkItems(List<String> workItemNos);
+    WorkItemData saveWorkItem(WorkItemData data);
 
     record TaskSnapshot(String id, TaskStatus status, TaskStage stage, DecompositionErrorCode errorCode,
                         String errorMessage, LocalDateTime createdAt, LocalDateTime completedAt) {}

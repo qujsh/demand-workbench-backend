@@ -24,6 +24,21 @@ public interface WorkItemMapper {
     @Select("SELECT * FROM work_item WHERE decomposition_id = #{decompositionId} AND deleted = 0 ORDER BY sort_order ASC")
     List<WorkItemRecord> findByDecompositionId(long decompositionId);
 
+    @Select("SELECT * FROM work_item WHERE work_item_no = #{workItemNo} AND deleted = 0")
+    WorkItemRecord findByWorkItemNo(String workItemNo);
+
+    @Select("SELECT COALESCE(MAX(sort_order), 0) FROM work_item WHERE decomposition_id = #{decompositionId} AND deleted = 0")
+    int findMaxSortOrder(long decompositionId);
+
+    @Update("""
+        UPDATE work_item
+        SET name = #{name}, description = #{description}, status = #{status}, role_name = #{roleName},
+            priority = #{priority}, start_date = #{startDate}, end_date = #{endDate},
+            dependency_text = #{dependencyText}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND deleted = 0
+        """)
+    int update(WorkItemRecord record);
+
     @Delete("DELETE FROM work_item WHERE decomposition_id = #{decompositionId}")
     void deleteByDecompositionId(long decompositionId);
 
