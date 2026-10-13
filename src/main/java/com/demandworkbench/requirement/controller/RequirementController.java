@@ -2,9 +2,12 @@ package com.demandworkbench.requirement.controller;
 
 import com.demandworkbench.common.ApiResponse;
 import com.demandworkbench.requirement.application.PublishSummaryService;
+import com.demandworkbench.requirement.application.PublishTaskService;
 import com.demandworkbench.requirement.application.RequirementService;
 import com.demandworkbench.requirement.controller.request.SaveRequirementRequest;
+import com.demandworkbench.requirement.controller.request.SavePublishTaskRequest;
 import com.demandworkbench.requirement.controller.response.PublishSummaryResponse;
+import com.demandworkbench.requirement.controller.response.PublishTaskResponse;
 import com.demandworkbench.requirement.controller.response.RequirementResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -27,10 +30,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class RequirementController {
     private final RequirementService service;
     private final PublishSummaryService publishSummaryService;
+    private final PublishTaskService publishTaskService;
 
-    public RequirementController(RequirementService service, PublishSummaryService publishSummaryService) {
+    public RequirementController(RequirementService service, PublishSummaryService publishSummaryService,
+                                 PublishTaskService publishTaskService) {
         this.service = service;
         this.publishSummaryService = publishSummaryService;
+        this.publishTaskService = publishTaskService;
     }
 
     /**
@@ -57,6 +63,21 @@ public class RequirementController {
     @GetMapping("/list")
     public ApiResponse<List<RequirementResponse>> list() {
         return ApiResponse.success(service.list().stream().map(RequirementResponse::from).toList());
+    }
+
+    /** 查询需求对应的任务发布草稿或正式任务。 */
+    @GetMapping("/publish-task")
+    public ApiResponse<PublishTaskResponse> publishTask(@RequestParam @NotBlank String requirementNo) {
+        return ApiResponse.success(PublishTaskResponse.from(publishTaskService.find(requirementNo)));
+    }
+
+    /** 保存发布草稿或确认发布任务。 */
+    @PostMapping("/publish-task/save")
+    public ApiResponse<PublishTaskResponse> savePublishTask(
+            @RequestParam @NotBlank String requirementNo,
+            @Valid @RequestBody SavePublishTaskRequest request) {
+        return ApiResponse.success(PublishTaskResponse.from(
+                publishTaskService.save(requirementNo, request.toData(requirementNo))));
     }
 
     /**

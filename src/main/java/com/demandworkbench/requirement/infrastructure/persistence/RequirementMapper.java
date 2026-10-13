@@ -92,6 +92,9 @@ public interface RequirementMapper {
         """)
     int savePublishSummary(String requirementNo, String content, String promptVersion);
 
+    @Update("UPDATE requirement SET stage = #{stage} WHERE requirement_no = #{requirementNo} AND deleted = 0")
+    int updateStage(String requirementNo, String stage);
+
     @Update("""
         UPDATE requirement
         SET deleted = 1

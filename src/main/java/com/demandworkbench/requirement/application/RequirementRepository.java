@@ -17,5 +17,7 @@ public interface RequirementRepository {
 
     void savePublishSummary(String requirementNo, String content, String promptVersion);
 
+    void updateStage(String requirementNo, String stage);
+
     boolean softDelete(String requirementNo);
 }

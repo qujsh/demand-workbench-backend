@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.demandworkbench.requirement.application.RequirementData;
 import com.demandworkbench.requirement.application.PublishSummaryData;
 import com.demandworkbench.requirement.application.PublishSummaryService;
+import com.demandworkbench.requirement.application.PublishTaskService;
 import com.demandworkbench.requirement.application.RequirementService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +32,9 @@ class RequirementControllerTest {
 
     @MockitoBean
     private PublishSummaryService publishSummaryService;
+
+    @MockitoBean
+    private PublishTaskService publishTaskService;
 
     @Test
     void shouldCreateRequirementWithoutNumberQueryParameter() throws Exception {

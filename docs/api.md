@@ -194,6 +194,16 @@ data: {"errorCode":"S048102006","message":"任务简介生成失败"}
 | `S048102004` | 需求保存失败 |
 | `S048102005` | 需求内容为空，无法生成任务简介 |
 | `S048102006` | 任务简介生成失败 |
+| `S048102007` | 发布任务内容无效 |
+| `S048102008` | 发布任务保存失败 |
+
+## 保存和发布任务
+
+查询草稿或已发布任务：`GET /api/v1/requirements/publish-task?requirementNo=REQ-...`
+
+保存草稿或确认发布：`POST /api/v1/requirements/publish-task/save?requirementNo=REQ-...`
+
+请求体中的 `status` 可为 `draft` 或 `published`。草稿允许内容不完整并按来源需求覆盖保存；正式发布要求任务标题、任务简介、招募人数和至少一个工作项有效。正式发布成功后，来源需求阶段同步更新为 `published`。
 
 ## 兼容性要求
 

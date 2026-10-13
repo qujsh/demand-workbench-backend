@@ -71,6 +71,8 @@ class InitialSchemaMigrationTest {
             assertThat(result.getString("version")).isEqualTo("202610120110");
             assertThat(result.next()).isTrue();
             assertThat(result.getString("version")).isEqualTo("202610131020");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("version")).isEqualTo("202610131500");
             assertThat(result.next()).isFalse();
         }
 

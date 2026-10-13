@@ -80,6 +80,13 @@ public class MyBatisRequirementRepository implements RequirementRepository {
     }
 
     @Override
+    public void updateStage(String requirementNo, String stage) {
+        if (requirementMapper.updateStage(requirementNo, stage) != 1) {
+            throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+        }
+    }
+
+    @Override
     public boolean softDelete(String requirementNo) {
         return requirementMapper.softDelete(requirementNo) == 1;
     }
