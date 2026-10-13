@@ -35,6 +35,10 @@ public class PublishTaskService {
         if (!"draft".equals(command.status()) && !"published".equals(command.status())) {
             throw new RequirementException(RequirementErrorCode.INVALID_PUBLISH_TASK);
         }
+        var existingTask = taskRepository.findByRequirementNo(requirementNo);
+        if (existingTask != null && "cancelled".equals(existingTask.status())) {
+            throw new RequirementException(RequirementErrorCode.INVALID_PUBLISH_TASK);
+        }
         var saved = taskRepository.save(new PublishTaskData(null, null, requirementNo,
                 requirement.currentDecompositionNo(), command.status(),
                 command.title().trim(), command.category(), command.summary().trim(), command.skills(),
@@ -45,5 +49,16 @@ public class PublishTaskService {
             requirementRepository.updateStage(requirementNo, "published");
         }
         return saved;
+    }
+
+    @Transactional
+    public PublishTaskData cancel(String requirementNo) {
+        var task = taskRepository.findByRequirementNo(requirementNo);
+        if (task == null || !"published".equals(task.status())) {
+            throw new RequirementException(RequirementErrorCode.PUBLISH_TASK_CANCEL_FAILED);
+        }
+        var cancelled = taskRepository.cancel(requirementNo);
+        requirementRepository.updateStage(requirementNo, "cancelled");
+        return cancelled;
     }
 }

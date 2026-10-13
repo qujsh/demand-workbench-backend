@@ -58,7 +58,7 @@ class InitialSchemaMigrationTest {
             statement.executeUpdate("""
                     INSERT INTO requirement
                     (requirement_no, title_code, title, stage, current_decomposition_id)
-                    VALUES ('REQ-CS-000001', 'CS', '测试需求', 'analyzing', %d)
+                    VALUES ('REQ-CS-000001', 'CS', '测试需求', 'draft', %d)
                     """.formatted(decompositionId));
         }
 
@@ -73,6 +73,8 @@ class InitialSchemaMigrationTest {
             assertThat(result.getString("version")).isEqualTo("202610131020");
             assertThat(result.next()).isTrue();
             assertThat(result.getString("version")).isEqualTo("202610131500");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("version")).isEqualTo("202610131630");
             assertThat(result.next()).isFalse();
         }
 

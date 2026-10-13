@@ -29,25 +29,11 @@ public class RequirementService {
             return repository.create(toData(null, null, titleCode, stage, command));
         }
         var existing = find(requirementNo);
-        if (RequirementStage.PUBLISHED.getCode().equals(existing.stage())) {
-            stage = RequirementStage.PUBLISHED.getCode();
+        if (RequirementStage.PUBLISHED.getCode().equals(existing.stage())
+                || RequirementStage.CANCELLED.getCode().equals(existing.stage())) {
+            stage = existing.stage();
         }
         return repository.update(toData(existing.id(), existing.requirementNo(), existing.titleCode(), stage, command));
-    }
-
-    /**
-     * 手动调整需求阶段；分析中和已发布只能由对应业务流程产生。
-     */
-    public RequirementData updateStage(String requirementNo, String stageCode) {
-        var requirement = find(requirementNo);
-        var target = parseStage(stageCode);
-        if (RequirementStage.PUBLISHED.getCode().equals(requirement.stage())
-                || (!RequirementStage.DRAFT.getCode().equals(target)
-                && !RequirementStage.READY_TO_PUBLISH.getCode().equals(target))) {
-            throw new RequirementException(RequirementErrorCode.INVALID_REQUIREMENT_STAGE);
-        }
-        repository.updateStage(requirementNo, target);
-        return find(requirementNo);
     }
 
     private String parseStage(String stage) {

@@ -40,7 +40,7 @@ class RequirementControllerTest {
     void shouldCreateRequirementWithoutNumberQueryParameter() throws Exception {
         var now = LocalDateTime.of(2026, 10, 12, 16, 0);
         var saved = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "开发一套预约服务系统",
-                "用户描述", "AI 描述", "ready_to_publish", null, now, now, 0, 0, List.of());
+                "用户描述", "AI 描述", "draft", null, now, now, 0, 0, List.of());
         when(service.save(eq(null), any())).thenReturn(saved);
 
         mockMvc.perform(post("/api/v1/requirements/save")
@@ -50,7 +50,7 @@ class RequirementControllerTest {
                                   "title": "开发一套预约服务系统",
                                   "userDescription": "用户描述",
                                   "aiDescription": "AI 描述",
-                                  "stage": "ready_to_publish",
+                                  "stage": "draft",
                                   "attachments": []
                                 }
                                 """))
@@ -64,7 +64,7 @@ class RequirementControllerTest {
         mockMvc.perform(post("/api/v1/requirements/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"", "stage":"analyzing", "attachments":[]}
+                                {"title":"", "stage":"draft", "attachments":[]}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))

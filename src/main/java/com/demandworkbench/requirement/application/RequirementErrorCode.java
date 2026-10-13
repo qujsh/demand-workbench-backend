@@ -13,7 +13,7 @@ public enum RequirementErrorCode {
     PUBLISH_SUMMARY_GENERATION_FAILED("S048102006", "任务简介生成失败"),
     INVALID_PUBLISH_TASK("S048102007", "发布任务内容无效"),
     PUBLISH_TASK_SAVE_FAILED("S048102008", "发布任务保存失败"),
-    INVALID_REQUIREMENT_STAGE("S048102009", "当前需求阶段不允许这样调整");
+    PUBLISH_TASK_CANCEL_FAILED("S048102009", "当前任务状态不允许取消");
 
     private final String code;
     private final String msg;

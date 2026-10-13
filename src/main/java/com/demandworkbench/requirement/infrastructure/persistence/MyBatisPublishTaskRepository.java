@@ -42,6 +42,14 @@ public class MyBatisPublishTaskRepository implements PublishTaskRepository {
         return findByRequirementNo(task.requirementNo());
     }
 
+    @Override
+    public PublishTaskData cancel(String requirementNo) {
+        if (mapper.cancel(requirementNo) != 1) {
+            throw new RequirementException(RequirementErrorCode.PUBLISH_TASK_CANCEL_FAILED);
+        }
+        return findByRequirementNo(requirementNo);
+    }
+
     private PublishTaskData toData(PublishTaskRecord record) {
         return new PublishTaskData(record.getId(), record.getTaskNo(), record.getRequirementNo(),
                 record.getDecompositionNo(), record.getStatus(),

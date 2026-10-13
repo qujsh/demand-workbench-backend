@@ -33,7 +33,7 @@ class RequirementServiceTest {
     @Test
     void shouldKeepExistingNumberAndTitleCodeWhenTitleChanges() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "旧标题", "", "",
-                "analyzing", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+                "draft", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
         when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
         when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -56,31 +56,15 @@ class RequirementServiceTest {
     }
 
     @Test
-    void shouldAllowManualStageChangeBetweenDraftAndReadyToPublish() {
+    void shouldKeepCancelledStageWhenRequirementIsSavedAgain() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "标题", "", "",
-                "ready_to_publish", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
-        when(repository.findByRequirementNo(existing.requirementNo()))
-                .thenReturn(existing)
-                .thenReturn(new RequirementData(existing.id(), existing.requirementNo(), existing.titleCode(),
-                        existing.title(), existing.userDescription(), existing.aiDescription(), "draft", null,
-                        existing.createdAt(), existing.updatedAt(), 0, 0, List.of()));
-
-        var result = service.updateStage(existing.requirementNo(), "draft");
-
-        verify(repository).updateStage(existing.requirementNo(), "draft");
-        assertThat(result.stage()).isEqualTo("draft");
-    }
-
-    @Test
-    void shouldRejectManualChangeForPublishedRequirement() {
-        var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "标题", "", "",
-                "published", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+                "cancelled", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
         when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+        when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThatThrownBy(() -> service.updateStage(existing.requirementNo(), "draft"))
-                .isInstanceOf(RequirementException.class)
-                .extracting("errorCode")
-                .isEqualTo(RequirementErrorCode.INVALID_REQUIREMENT_STAGE);
+        var result = service.save(existing.requirementNo(), command("修改后的标题", null));
+
+        assertThat(result.stage()).isEqualTo("cancelled");
     }
 
     @Test
@@ -115,7 +99,7 @@ class RequirementServiceTest {
     }
 
     private RequirementService.SaveCommand command(String title, String decompositionId) {
-        return new RequirementService.SaveCommand(title, "用户描述", "AI 描述", "analyzing",
+        return new RequirementService.SaveCommand(title, "用户描述", "AI 描述", "draft",
                 decompositionId, List.of());
     }
 }

@@ -46,4 +46,12 @@ public interface PublishTaskMapper {
         """)
     int update(PublishTaskRecord record);
 
+    @Update("""
+        UPDATE published_task t
+        JOIN requirement r ON r.id = t.requirement_id AND r.deleted = 0
+        SET t.status = 'cancelled'
+        WHERE r.requirement_no = #{requirementNo} AND t.status = 'published' AND t.deleted = 0
+        """)
+    int cancel(String requirementNo);
+
 }

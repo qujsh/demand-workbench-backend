@@ -28,7 +28,7 @@ class RequirementSchemaMigrationTest {
             long requirementId;
             try (var statement = connection.prepareStatement("""
                     INSERT INTO requirement (title_code, title, stage)
-                    VALUES ('KFYTYY', '开发一套预约服务系统', 'analyzing')
+                    VALUES ('KFYTYY', '开发一套预约服务系统', 'draft')
                     """, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                 statement.executeUpdate();
                 try (var keys = statement.getGeneratedKeys()) {

@@ -75,6 +75,6 @@ class PublishSummaryServiceTest {
 
     private RequirementData requirement(String aiDescription, String userDescription) {
         return new RequirementData(1L, "REQ-1", "REQ", "需求", userDescription, aiDescription,
-                "ready_to_publish", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+                "draft", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
     }
 }
