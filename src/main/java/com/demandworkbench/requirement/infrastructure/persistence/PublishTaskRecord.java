@@ -11,6 +11,7 @@ public class PublishTaskRecord {
     private Long id;
     private String taskNo;
     private String requirementNo;
+    private String decompositionNo;
     private String status;
     private String title;
     private String category;

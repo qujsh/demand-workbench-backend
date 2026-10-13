@@ -2,6 +2,7 @@ CREATE TABLE published_task (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '发布任务内部主键',
     task_no VARCHAR(32) COMMENT '对外任务编号',
     requirement_id BIGINT UNSIGNED NOT NULL COMMENT '来源需求内部主键',
+    decomposition_id BIGINT UNSIGNED COMMENT '发布任务采用的拆解记录内部主键',
     status VARCHAR(24) NOT NULL COMMENT '发布任务状态：draft、published',
     title VARCHAR(255) NOT NULL COMMENT '任务标题',
     category VARCHAR(64) COMMENT '任务分类',
@@ -24,19 +25,6 @@ CREATE TABLE published_task (
     PRIMARY KEY (id),
     UNIQUE INDEX uk_published_task_no (task_no),
     UNIQUE INDEX uk_published_task_requirement (requirement_id),
+    INDEX idx_published_task_decomposition (decomposition_id),
     INDEX idx_published_task_status_updated (status, deleted, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求发布任务';
-
-CREATE TABLE published_task_work_item (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '任务工作项关联内部主键',
-    task_id BIGINT UNSIGNED NOT NULL COMMENT '发布任务内部主键',
-    work_item_id BIGINT UNSIGNED NOT NULL COMMENT '关联工作项内部主键',
-    sort_order INT NOT NULL COMMENT '工作项展示顺序',
-    deleted TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '软删除标记：0未删除，1已删除',
-    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
-        ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
-    PRIMARY KEY (id),
-    UNIQUE INDEX uk_published_task_work_item (task_id, work_item_id),
-    INDEX idx_published_task_work_item_order (task_id, deleted, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='发布任务包含的工作项';

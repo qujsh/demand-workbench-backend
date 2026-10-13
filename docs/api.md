@@ -203,7 +203,7 @@ data: {"errorCode":"S048102006","message":"任务简介生成失败"}
 
 保存草稿或确认发布：`POST /api/v1/requirements/publish-task/save?requirementNo=REQ-...`
 
-请求体中的 `status` 可为 `draft` 或 `published`。草稿允许内容不完整并按来源需求覆盖保存；正式发布要求任务标题、任务简介、招募人数和至少一个工作项有效。正式发布成功后，来源需求阶段同步更新为 `published`。
+请求体中的 `status` 可为 `draft` 或 `published`。草稿允许内容不完整并按来源需求覆盖保存；正式发布要求任务标题、任务简介、招募人数有效且来源需求已有可用拆解结果。发布任务直接绑定发布时采用的完整拆解记录，不单独提交工作项编号。正式发布成功后，来源需求阶段同步更新为 `published`。
 
 ## 兼容性要求
 

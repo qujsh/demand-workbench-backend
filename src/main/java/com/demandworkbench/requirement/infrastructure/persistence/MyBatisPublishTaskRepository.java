@@ -39,21 +39,16 @@ public class MyBatisPublishTaskRepository implements PublishTaskRepository {
                 throw new RequirementException(RequirementErrorCode.PUBLISH_TASK_SAVE_FAILED);
             }
         }
-        mapper.deleteWorkItems(record.getId());
-        for (int index = 0; index < task.workItemNos().size(); index++) {
-            if (mapper.insertWorkItem(record.getId(), task.requirementNo(), task.workItemNos().get(index), index) != 1) {
-                throw new RequirementException(RequirementErrorCode.INVALID_PUBLISH_TASK);
-            }
-        }
         return findByRequirementNo(task.requirementNo());
     }
 
     private PublishTaskData toData(PublishTaskRecord record) {
-        return new PublishTaskData(record.getId(), record.getTaskNo(), record.getRequirementNo(), record.getStatus(),
+        return new PublishTaskData(record.getId(), record.getTaskNo(), record.getRequirementNo(),
+                record.getDecompositionNo(), record.getStatus(),
                 record.getTitle(), record.getCategory(), record.getSummary(), record.getSkills(),
                 record.getExperience(), record.getRecruitCount(), record.getPriceModel(), record.getBudget(),
                 record.getStartDate(), record.getDeadline(), record.getWorkMode(), record.getRecruitMode(),
-                record.getVisibility(), mapper.findWorkItemNos(record.getId()), record.getPublishedAt());
+                record.getVisibility(), record.getPublishedAt());
     }
 
     private PublishTaskRecord toRecord(PublishTaskData task) {
