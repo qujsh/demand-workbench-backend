@@ -1,5 +1,6 @@
 package com.demandworkbench.requirement.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -65,6 +66,31 @@ class PublishTaskServiceTest {
                 .isInstanceOf(RequirementException.class)
                 .extracting("errorCode")
                 .isEqualTo(RequirementErrorCode.PUBLISH_TASK_CANCEL_FAILED);
+    }
+
+    @Test
+    void shouldKeepCancelledStatusWhileEditingRepublishDraft() {
+        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement("DEC-1"));
+        when(taskRepository.findByRequirementNo("REQ-1"))
+                .thenReturn(task("cancelled", "旧任务", "旧简介"));
+        when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var saved = service.save("REQ-1", task("draft", "新任务", "新简介"));
+
+        assertThat(saved.status()).isEqualTo("cancelled");
+    }
+
+    @Test
+    void shouldRepublishCancelledTaskAfterConfirmation() {
+        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement("DEC-1"));
+        when(taskRepository.findByRequirementNo("REQ-1"))
+                .thenReturn(task("cancelled", "旧任务", "旧简介"));
+        when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var saved = service.save("REQ-1", task("published", "新任务", "新简介"));
+
+        assertThat(saved.status()).isEqualTo("published");
+        verify(requirementRepository).updateStage("REQ-1", "published");
     }
 
     private PublishTaskData task(String status, String title, String summary) {

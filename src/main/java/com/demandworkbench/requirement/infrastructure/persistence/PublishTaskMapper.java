@@ -41,7 +41,7 @@ public interface PublishTaskMapper {
             start_date = #{startDate}, deadline = #{deadline}, work_mode = #{workMode},
             recruit_mode = #{recruitMode}, visibility = #{visibility},
             published_at = CASE WHEN #{status} = 'published'
-                THEN COALESCE(published_at, CURRENT_TIMESTAMP(3)) ELSE published_at END
+                THEN CURRENT_TIMESTAMP(3) ELSE published_at END
         WHERE id = #{id} AND deleted = 0
         """)
     int update(PublishTaskRecord record);

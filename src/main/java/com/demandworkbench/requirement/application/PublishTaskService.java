@@ -36,11 +36,10 @@ public class PublishTaskService {
             throw new RequirementException(RequirementErrorCode.INVALID_PUBLISH_TASK);
         }
         var existingTask = taskRepository.findByRequirementNo(requirementNo);
-        if (existingTask != null && "cancelled".equals(existingTask.status())) {
-            throw new RequirementException(RequirementErrorCode.INVALID_PUBLISH_TASK);
-        }
+        var savedStatus = existingTask != null && "cancelled".equals(existingTask.status())
+                && "draft".equals(command.status()) ? "cancelled" : command.status();
         var saved = taskRepository.save(new PublishTaskData(null, null, requirementNo,
-                requirement.currentDecompositionNo(), command.status(),
+                requirement.currentDecompositionNo(), savedStatus,
                 command.title().trim(), command.category(), command.summary().trim(), command.skills(),
                 command.experience(), command.recruitCount(), command.priceModel(), command.budget(),
                 command.startDate(), command.deadline(), command.workMode(), command.recruitMode(),
