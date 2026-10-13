@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 @Service
 public class PublishSummaryService {
     public static final String PROMPT_VERSION = "publish-summary-v2";
+    public static final String USER_DESCRIPTION_VERSION = "user-description-v1";
     private static final Pattern NON_CONFIRMED_SECTION = Pattern.compile(
             "(?m)^#{1,6}\\s*(?:\\d+[.、]\\s*)?(?:可选|技术风险).*$");
 
@@ -46,6 +47,11 @@ public class PublishSummaryService {
             var confirmedAnalysis = extractConfirmedAnalysis(requirement.aiDescription());
             if (!StringUtils.hasText(userDescription) && !StringUtils.hasText(confirmedAnalysis)) {
                 return Flux.error(new RequirementException(RequirementErrorCode.PUBLISH_SUMMARY_SOURCE_EMPTY));
+            }
+            if (!StringUtils.hasText(requirement.aiDescription())) {
+                var content = userDescription.trim();
+                repository.savePublishSummary(requirementNo, content, USER_DESCRIPTION_VERSION);
+                return Flux.just(content);
             }
 
             repository.updatePublishSummaryStatus(

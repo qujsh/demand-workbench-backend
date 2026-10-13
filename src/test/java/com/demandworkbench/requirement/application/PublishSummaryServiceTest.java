@@ -47,11 +47,25 @@ class PublishSummaryServiceTest {
     }
 
     @Test
+    void shouldUseUserDescriptionDirectlyWhenAiDescriptionIsEmpty() {
+        when(repository.findPublishSummary("REQ-1")).thenReturn(
+                new PublishSummaryData("REQ-1", "pending", null, null, null));
+        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement("", "  原始需求  "));
+
+        var chunks = service.generate("REQ-1").collectList().block();
+
+        assertThat(chunks).containsExactly("原始需求");
+        verify(repository).savePublishSummary("REQ-1", "原始需求", "user-description-v1");
+        verify(generator, never()).generate(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
     void shouldMarkFailedWhenGeneratorFails() {
         when(repository.findPublishSummary("REQ-1")).thenReturn(
                 new PublishSummaryData("REQ-1", "pending", null, null, null));
-        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement("", "原始需求"));
-        when(generator.generate("原始需求", ""))
+        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement("已确认范围", "原始需求"));
+        when(generator.generate("原始需求", "已确认范围"))
                 .thenReturn(Flux.error(new IllegalStateException("provider failed")));
 
         service.generate("REQ-1").onErrorComplete().blockLast();
