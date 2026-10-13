@@ -4,6 +4,7 @@ import com.demandworkbench.requirement.application.RequirementData;
 import com.demandworkbench.requirement.application.RequirementErrorCode;
 import com.demandworkbench.requirement.application.RequirementException;
 import com.demandworkbench.requirement.application.RequirementRepository;
+import com.demandworkbench.requirement.application.PublishSummaryData;
 import com.demandworkbench.requirement.domain.service.RequirementNumberGenerator;
 import java.util.List;
 import org.springframework.stereotype.Repository;
@@ -54,6 +55,28 @@ public class MyBatisRequirementRepository implements RequirementRepository {
     @Override
     public List<RequirementData> findAll() {
         return requirementMapper.findAll().stream().map(this::toData).toList();
+    }
+
+    @Override
+    public PublishSummaryData findPublishSummary(String requirementNo) {
+        var record = requirementMapper.findPublishSummary(requirementNo);
+        return record == null ? null : new PublishSummaryData(record.getRequirementNo(),
+                record.getPublishSummaryStatus(), record.getPublishSummary(),
+                record.getPublishSummaryPromptVersion(), record.getPublishSummaryGeneratedAt());
+    }
+
+    @Override
+    public void updatePublishSummaryStatus(String requirementNo, String status, String promptVersion) {
+        if (requirementMapper.updatePublishSummaryStatus(requirementNo, status, promptVersion) != 1) {
+            throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+        }
+    }
+
+    @Override
+    public void savePublishSummary(String requirementNo, String content, String promptVersion) {
+        if (requirementMapper.savePublishSummary(requirementNo, content, promptVersion) != 1) {
+            throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+        }
     }
 
     @Override

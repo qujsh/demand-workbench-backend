@@ -13,6 +13,10 @@ public class RequirementRecord {
     private String title;
     private String userDescription;
     private String aiDescription;
+    private String publishSummary;
+    private String publishSummaryStatus;
+    private String publishSummaryPromptVersion;
+    private LocalDateTime publishSummaryGeneratedAt;
     private String stage;
     private Long currentDecompositionId;
     private String currentDecompositionNo;

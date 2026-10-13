@@ -30,7 +30,8 @@ public class ApiExceptionHandler {
             case INVALID_REQUIREMENT -> HttpStatus.BAD_REQUEST;
             case REQUIREMENT_NOT_FOUND, DECOMPOSITION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case DECOMPOSITION_NOT_COMPLETED -> HttpStatus.CONFLICT;
-            case REQUIREMENT_SAVE_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
+            case PUBLISH_SUMMARY_SOURCE_EMPTY -> HttpStatus.BAD_REQUEST;
+            case REQUIREMENT_SAVE_FAILED, PUBLISH_SUMMARY_GENERATION_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
         return ResponseEntity.status(status)
                 .body(ApiResponse.failure(errorCode.getCode(), exception.getMessage()));

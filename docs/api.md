@@ -158,6 +158,29 @@
 
 删除接口将需求标记为已删除，不物理删除需求、附件、拆解记录或工作项。列表与详情接口只返回未删除需求。列表按最后更新时间倒序返回。详情和列表返回需求标题、两类需求描述、当前阶段、当前拆解任务、模块数、工作项数、附件及创建和更新时间。工作项数统计 `work` 和 `subtask` 两类可执行节点。
 
+## 发布任务简介
+
+查询接口：`GET /api/v1/requirements/publish-summary?requirementNo=REQ-KFYTYY-000025`
+
+查询结果包含 `pending`、`generating`、`success`、`failed` 四种状态，以及已完成时的 `content`、`promptVersion` 和 `generatedAt`。前端只有在没有成功内容时才请求生成接口。
+
+流式生成接口：`POST /api/v1/requirements/publish-summary/generate?requirementNo=REQ-KFYTYY-000025`
+
+生成接口返回 `text/event-stream`，事件类型如下：
+
+```text
+event: content
+data: {"text":"流式文本片段"}
+
+event: complete
+data: {"requirementNo":"REQ-...","status":"success","content":"完整任务简介"}
+
+event: error
+data: {"errorCode":"S048102006","message":"任务简介生成失败"}
+```
+
+正式结果只在模型流完整结束后保存。已有正式结果时不会再次调用 AI；生成失败时状态更新为 `failed`，前端可以重新请求生成。
+
 ### 需求接口错误码
 
 | 错误码 | 含义 |
@@ -167,6 +190,8 @@
 | `S048102002` | 拆解任务不存在 |
 | `S048102003` | 拆解任务尚未完成 |
 | `S048102004` | 需求保存失败 |
+| `S048102005` | 需求内容为空，无法生成任务简介 |
+| `S048102006` | 任务简介生成失败 |
 
 ## 兼容性要求
 

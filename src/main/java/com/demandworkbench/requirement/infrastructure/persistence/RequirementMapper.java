@@ -68,6 +68,30 @@ public interface RequirementMapper {
         """)
     List<RequirementRecord> findAll();
 
+    @Select("""
+        SELECT requirement_no, publish_summary, publish_summary_status,
+               publish_summary_prompt_version, publish_summary_generated_at
+        FROM requirement
+        WHERE requirement_no = #{requirementNo} AND deleted = 0
+        """)
+    RequirementRecord findPublishSummary(String requirementNo);
+
+    @Update("""
+        UPDATE requirement
+        SET publish_summary_status = #{status}, publish_summary_prompt_version = #{promptVersion}
+        WHERE requirement_no = #{requirementNo} AND deleted = 0
+        """)
+    int updatePublishSummaryStatus(String requirementNo, String status, String promptVersion);
+
+    @Update("""
+        UPDATE requirement
+        SET publish_summary = #{content}, publish_summary_status = 'success',
+            publish_summary_prompt_version = #{promptVersion},
+            publish_summary_generated_at = CURRENT_TIMESTAMP(3)
+        WHERE requirement_no = #{requirementNo} AND deleted = 0
+        """)
+    int savePublishSummary(String requirementNo, String content, String promptVersion);
+
     @Update("""
         UPDATE requirement
         SET deleted = 1

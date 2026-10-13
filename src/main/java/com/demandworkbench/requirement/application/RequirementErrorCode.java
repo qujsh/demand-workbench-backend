@@ -8,7 +8,9 @@ public enum RequirementErrorCode {
     REQUIREMENT_NOT_FOUND("S048102001", "需求不存在"),
     DECOMPOSITION_NOT_FOUND("S048102002", "拆解任务不存在"),
     DECOMPOSITION_NOT_COMPLETED("S048102003", "拆解任务尚未完成"),
-    REQUIREMENT_SAVE_FAILED("S048102004", "需求保存失败");
+    REQUIREMENT_SAVE_FAILED("S048102004", "需求保存失败"),
+    PUBLISH_SUMMARY_SOURCE_EMPTY("S048102005", "需求内容为空，无法生成任务简介"),
+    PUBLISH_SUMMARY_GENERATION_FAILED("S048102006", "任务简介生成失败");
 
     private final String code;
     private final String msg;

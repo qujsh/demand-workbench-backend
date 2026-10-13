@@ -69,6 +69,8 @@ class InitialSchemaMigrationTest {
             assertThat(result.getString("version")).isEqualTo("202610120100");
             assertThat(result.next()).isTrue();
             assertThat(result.getString("version")).isEqualTo("202610120110");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("version")).isEqualTo("202610131020");
             assertThat(result.next()).isFalse();
         }
 
@@ -141,7 +143,7 @@ class InitialSchemaMigrationTest {
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(55);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(59);
         }
 
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());

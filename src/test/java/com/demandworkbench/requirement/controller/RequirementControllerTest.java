@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.demandworkbench.requirement.application.RequirementData;
+import com.demandworkbench.requirement.application.PublishSummaryData;
+import com.demandworkbench.requirement.application.PublishSummaryService;
 import com.demandworkbench.requirement.application.RequirementService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +28,9 @@ class RequirementControllerTest {
 
     @MockitoBean
     private RequirementService service;
+
+    @MockitoBean
+    private PublishSummaryService publishSummaryService;
 
     @Test
     void shouldCreateRequirementWithoutNumberQueryParameter() throws Exception {
@@ -70,5 +75,19 @@ class RequirementControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(service).delete("REQ-KFYTYY-000025");
+    }
+
+    @Test
+    void shouldReturnSavedPublishSummary() throws Exception {
+        when(publishSummaryService.find("REQ-KFYTYY-000025")).thenReturn(
+                new PublishSummaryData("REQ-KFYTYY-000025", "success", "精简任务简介",
+                        "publish-summary-v1", LocalDateTime.of(2026, 10, 13, 10, 30)));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/requirements/publish-summary")
+                        .queryParam("requirementNo", "REQ-KFYTYY-000025"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg.status").value("success"))
+                .andExpect(jsonPath("$.msg.content").value("精简任务简介"));
     }
 }

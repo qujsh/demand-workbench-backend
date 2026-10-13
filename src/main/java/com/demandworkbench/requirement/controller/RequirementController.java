@@ -1,28 +1,36 @@
 package com.demandworkbench.requirement.controller;
 
 import com.demandworkbench.common.ApiResponse;
+import com.demandworkbench.requirement.application.PublishSummaryService;
 import com.demandworkbench.requirement.application.RequirementService;
 import com.demandworkbench.requirement.controller.request.SaveRequirementRequest;
+import com.demandworkbench.requirement.controller.response.PublishSummaryResponse;
 import com.demandworkbench.requirement.controller.response.RequirementResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Validated
 @RestController
 @RequestMapping("/api/v1/requirements")
 public class RequirementController {
     private final RequirementService service;
+    private final PublishSummaryService publishSummaryService;
 
-    public RequirementController(RequirementService service) {
+    public RequirementController(RequirementService service, PublishSummaryService publishSummaryService) {
         this.service = service;
+        this.publishSummaryService = publishSummaryService;
     }
 
     /**
@@ -52,11 +60,59 @@ public class RequirementController {
     }
 
     /**
+     * 查询需求对应的发布任务简介及生成状态。
+     */
+    @GetMapping("/publish-summary")
+    public ApiResponse<PublishSummaryResponse> publishSummary(
+            @RequestParam @NotBlank String requirementNo) {
+        return ApiResponse.success(PublishSummaryResponse.from(publishSummaryService.find(requirementNo)));
+    }
+
+    /**
+     * 流式生成需求对应的发布任务简介。
+     */
+    @PostMapping(value = "/publish-summary/generate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter generatePublishSummary(@RequestParam @NotBlank String requirementNo) {
+        var emitter = new SseEmitter(300_000L);
+        var clientConnected = new AtomicBoolean(true);
+        emitter.onCompletion(() -> clientConnected.set(false));
+        emitter.onTimeout(() -> clientConnected.set(false));
+        publishSummaryService.generate(requirementNo).subscribe(
+                chunk -> sendEvent(emitter, clientConnected, "content", new ContentEvent(chunk)),
+                error -> {
+                    sendEvent(emitter, clientConnected, "error",
+                            new ErrorEvent("S048102006", "任务简介生成失败"));
+                    emitter.complete();
+                },
+                () -> {
+                    var completed = publishSummaryService.find(requirementNo);
+                    sendEvent(emitter, clientConnected, "complete", PublishSummaryResponse.from(completed));
+                    emitter.complete();
+                });
+        return emitter;
+    }
+
+    /**
      * 按业务编号软删除需求。
      */
     @PostMapping("/delete")
     public ApiResponse<String> delete(@RequestParam @NotBlank String requirementNo) {
         service.delete(requirementNo);
         return ApiResponse.success("deleted");
+    }
+
+    private void sendEvent(SseEmitter emitter, AtomicBoolean clientConnected, String name, Object data) {
+        if (!clientConnected.get()) return;
+        try {
+            emitter.send(SseEmitter.event().name(name).data(data));
+        } catch (IOException exception) {
+            clientConnected.set(false);
+        }
+    }
+
+    private record ContentEvent(String text) {
+    }
+
+    private record ErrorEvent(String errorCode, String message) {
     }
 }

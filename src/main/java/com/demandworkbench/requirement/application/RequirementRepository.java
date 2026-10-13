@@ -11,5 +11,11 @@ public interface RequirementRepository {
 
     List<RequirementData> findAll();
 
+    PublishSummaryData findPublishSummary(String requirementNo);
+
+    void updatePublishSummaryStatus(String requirementNo, String status, String promptVersion);
+
+    void savePublishSummary(String requirementNo, String content, String promptVersion);
+
     boolean softDelete(String requirementNo);
 }
