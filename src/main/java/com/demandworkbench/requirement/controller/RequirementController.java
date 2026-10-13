@@ -6,6 +6,7 @@ import com.demandworkbench.requirement.application.PublishTaskService;
 import com.demandworkbench.requirement.application.RequirementService;
 import com.demandworkbench.requirement.controller.request.SaveRequirementRequest;
 import com.demandworkbench.requirement.controller.request.SavePublishTaskRequest;
+import com.demandworkbench.requirement.controller.request.UpdateRequirementStageRequest;
 import com.demandworkbench.requirement.controller.response.PublishSummaryResponse;
 import com.demandworkbench.requirement.controller.response.PublishTaskResponse;
 import com.demandworkbench.requirement.controller.response.RequirementResponse;
@@ -63,6 +64,14 @@ public class RequirementController {
     @GetMapping("/list")
     public ApiResponse<List<RequirementResponse>> list() {
         return ApiResponse.success(service.list().stream().map(RequirementResponse::from).toList());
+    }
+
+    /** 手动调整需求阶段。 */
+    @PostMapping("/stage")
+    public ApiResponse<RequirementResponse> updateStage(
+            @RequestParam @NotBlank String requirementNo,
+            @Valid @RequestBody UpdateRequirementStageRequest request) {
+        return ApiResponse.success(RequirementResponse.from(service.updateStage(requirementNo, request.stage())));
     }
 
     /** 查询需求对应的任务发布草稿或正式任务。 */

@@ -28,7 +28,7 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiResponse<Void>> handleRequirement(RequirementException exception) {
         var errorCode = exception.getErrorCode();
         var status = switch (errorCode) {
-            case INVALID_REQUIREMENT, INVALID_PUBLISH_TASK -> HttpStatus.BAD_REQUEST;
+            case INVALID_REQUIREMENT, INVALID_PUBLISH_TASK, INVALID_REQUIREMENT_STAGE -> HttpStatus.BAD_REQUEST;
             case REQUIREMENT_NOT_FOUND, DECOMPOSITION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case DECOMPOSITION_NOT_COMPLETED -> HttpStatus.CONFLICT;
             case PUBLISH_SUMMARY_SOURCE_EMPTY -> HttpStatus.BAD_REQUEST;

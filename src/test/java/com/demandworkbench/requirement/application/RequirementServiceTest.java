@@ -44,6 +44,46 @@ class RequirementServiceTest {
     }
 
     @Test
+    void shouldKeepPublishedStageWhenRequirementIsSavedAgain() {
+        var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "旧标题", "", "",
+                "published", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+        when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+        when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = service.save(existing.requirementNo(), command("修改后的标题", null));
+
+        assertThat(result.stage()).isEqualTo("published");
+    }
+
+    @Test
+    void shouldAllowManualStageChangeBetweenDraftAndReadyToPublish() {
+        var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "标题", "", "",
+                "ready_to_publish", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+        when(repository.findByRequirementNo(existing.requirementNo()))
+                .thenReturn(existing)
+                .thenReturn(new RequirementData(existing.id(), existing.requirementNo(), existing.titleCode(),
+                        existing.title(), existing.userDescription(), existing.aiDescription(), "draft", null,
+                        existing.createdAt(), existing.updatedAt(), 0, 0, List.of()));
+
+        var result = service.updateStage(existing.requirementNo(), "draft");
+
+        verify(repository).updateStage(existing.requirementNo(), "draft");
+        assertThat(result.stage()).isEqualTo("draft");
+    }
+
+    @Test
+    void shouldRejectManualChangeForPublishedRequirement() {
+        var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "标题", "", "",
+                "published", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
+        when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+
+        assertThatThrownBy(() -> service.updateStage(existing.requirementNo(), "draft"))
+                .isInstanceOf(RequirementException.class)
+                .extracting("errorCode")
+                .isEqualTo(RequirementErrorCode.INVALID_REQUIREMENT_STAGE);
+    }
+
+    @Test
     void shouldRejectUncompletedDecomposition() {
         when(decompositionRepository.find("DEC-1")).thenReturn(new DecompositionRepository.TaskSnapshot(
                 "DEC-1", TaskStatus.PROCESSING, TaskStage.AI_GENERATING, null, null,
