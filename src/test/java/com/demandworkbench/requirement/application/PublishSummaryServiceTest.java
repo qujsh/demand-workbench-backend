@@ -18,28 +18,28 @@ class PublishSummaryServiceTest {
 
     @Test
     void shouldStreamAndPersistGeneratedSummary() {
-        when(repository.findPublishSummary("REQ-1")).thenReturn(
+        when(repository.findPublishSummary(1L, "REQ-1")).thenReturn(
                 new PublishSummaryData("REQ-1", "pending", null, null, null));
-        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement(
+        when(repository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement(
                 "## 必需（P0）\n已确认范围\n## 可选（P1）\n待确认范围\n# 3. 技术风险点\n缓存方案",
                 "原始需求"));
         when(generator.generate("原始需求", "## 必需（P0）\n已确认范围"))
                 .thenReturn(Flux.just("精简", "任务简介"));
 
-        var chunks = service.generate("REQ-1").collectList().block();
+        var chunks = service.generate(1L, "REQ-1").collectList().block();
 
         assertThat(chunks).containsExactly("精简", "任务简介");
-        verify(repository).updatePublishSummaryStatus("REQ-1", "generating", "publish-summary-v2");
-        verify(repository).savePublishSummary("REQ-1", "精简任务简介", "publish-summary-v2");
+        verify(repository).updatePublishSummaryStatus(1L, "REQ-1", "generating", "publish-summary-v2");
+        verify(repository).savePublishSummary(1L, "REQ-1", "精简任务简介", "publish-summary-v2");
     }
 
     @Test
     void shouldReturnSavedSummaryWithoutCallingGenerator() {
-        when(repository.findPublishSummary("REQ-1")).thenReturn(
+        when(repository.findPublishSummary(1L, "REQ-1")).thenReturn(
                 new PublishSummaryData("REQ-1", "success", "已有简介", "publish-summary-v1",
                         LocalDateTime.now()));
 
-        var chunks = service.generate("REQ-1").collectList().block();
+        var chunks = service.generate(1L, "REQ-1").collectList().block();
 
         assertThat(chunks).containsExactly("已有简介");
         verify(generator, never()).generate(
@@ -48,29 +48,29 @@ class PublishSummaryServiceTest {
 
     @Test
     void shouldUseUserDescriptionDirectlyWhenAiDescriptionIsEmpty() {
-        when(repository.findPublishSummary("REQ-1")).thenReturn(
+        when(repository.findPublishSummary(1L, "REQ-1")).thenReturn(
                 new PublishSummaryData("REQ-1", "pending", null, null, null));
-        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement("", "  原始需求  "));
+        when(repository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("", "  原始需求  "));
 
-        var chunks = service.generate("REQ-1").collectList().block();
+        var chunks = service.generate(1L, "REQ-1").collectList().block();
 
         assertThat(chunks).containsExactly("原始需求");
-        verify(repository).savePublishSummary("REQ-1", "原始需求", "user-description-v1");
+        verify(repository).savePublishSummary(1L, "REQ-1", "原始需求", "user-description-v1");
         verify(generator, never()).generate(
                 org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test
     void shouldMarkFailedWhenGeneratorFails() {
-        when(repository.findPublishSummary("REQ-1")).thenReturn(
+        when(repository.findPublishSummary(1L, "REQ-1")).thenReturn(
                 new PublishSummaryData("REQ-1", "pending", null, null, null));
-        when(repository.findByRequirementNo("REQ-1")).thenReturn(requirement("已确认范围", "原始需求"));
+        when(repository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("已确认范围", "原始需求"));
         when(generator.generate("原始需求", "已确认范围"))
                 .thenReturn(Flux.error(new IllegalStateException("provider failed")));
 
-        service.generate("REQ-1").onErrorComplete().blockLast();
+        service.generate(1L, "REQ-1").onErrorComplete().blockLast();
 
-        verify(repository).updatePublishSummaryStatus("REQ-1", "failed", "publish-summary-v2");
+        verify(repository).updatePublishSummaryStatus(1L, "REQ-1", "failed", "publish-summary-v2");
     }
 
     private RequirementData requirement(String aiDescription, String userDescription) {

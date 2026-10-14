@@ -24,7 +24,7 @@ class RequirementServiceTest {
         var command = command("开发一套预约服务系统", null);
         when(repository.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service.save(null, command);
+        var result = service.save(1L, null, command);
 
         assertThat(result.titleCode()).isEqualTo("KFYTYY");
         verify(repository).create(any());
@@ -34,10 +34,10 @@ class RequirementServiceTest {
     void shouldKeepExistingNumberAndTitleCodeWhenTitleChanges() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "旧标题", "", "",
                 "draft", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
-        when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+        when(repository.findByRequirementNo(1L, existing.requirementNo())).thenReturn(existing);
         when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service.save(existing.requirementNo(), command("完全不同的标题", null));
+        var result = service.save(1L, existing.requirementNo(), command("完全不同的标题", null));
 
         assertThat(result.requirementNo()).isEqualTo(existing.requirementNo());
         assertThat(result.titleCode()).isEqualTo("KFYTYY");
@@ -47,10 +47,10 @@ class RequirementServiceTest {
     void shouldKeepPublishedStageWhenRequirementIsSavedAgain() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "旧标题", "", "",
                 "published", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
-        when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+        when(repository.findByRequirementNo(1L, existing.requirementNo())).thenReturn(existing);
         when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service.save(existing.requirementNo(), command("修改后的标题", null));
+        var result = service.save(1L, existing.requirementNo(), command("修改后的标题", null));
 
         assertThat(result.stage()).isEqualTo("published");
     }
@@ -59,10 +59,10 @@ class RequirementServiceTest {
     void shouldKeepCancelledStageWhenRequirementIsSavedAgain() {
         var existing = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "标题", "", "",
                 "cancelled", null, LocalDateTime.now(), LocalDateTime.now(), 0, 0, List.of());
-        when(repository.findByRequirementNo(existing.requirementNo())).thenReturn(existing);
+        when(repository.findByRequirementNo(1L, existing.requirementNo())).thenReturn(existing);
         when(repository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service.save(existing.requirementNo(), command("修改后的标题", null));
+        var result = service.save(1L, existing.requirementNo(), command("修改后的标题", null));
 
         assertThat(result.stage()).isEqualTo("cancelled");
     }
@@ -73,7 +73,7 @@ class RequirementServiceTest {
                 "DEC-1", TaskStatus.PROCESSING, TaskStage.AI_GENERATING, null, null,
                 LocalDateTime.now(), null));
 
-        assertThatThrownBy(() -> service.save(null, command("需求", "DEC-1")))
+        assertThatThrownBy(() -> service.save(1L, null, command("需求", "DEC-1")))
                 .isInstanceOf(RequirementException.class)
                 .extracting("errorCode")
                 .isEqualTo(RequirementErrorCode.DECOMPOSITION_NOT_COMPLETED);
@@ -81,18 +81,18 @@ class RequirementServiceTest {
 
     @Test
     void shouldSoftDeleteRequirementByBusinessNumber() {
-        when(repository.softDelete("REQ-KFYTYY-000025")).thenReturn(true);
+        when(repository.softDelete(1L, "REQ-KFYTYY-000025")).thenReturn(true);
 
-        service.delete("REQ-KFYTYY-000025");
+        service.delete(1L, "REQ-KFYTYY-000025");
 
-        verify(repository).softDelete("REQ-KFYTYY-000025");
+        verify(repository).softDelete(1L, "REQ-KFYTYY-000025");
     }
 
     @Test
     void shouldRejectDeletingMissingRequirement() {
-        when(repository.softDelete("REQ-MISSING-000001")).thenReturn(false);
+        when(repository.softDelete(1L, "REQ-MISSING-000001")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.delete("REQ-MISSING-000001"))
+        assertThatThrownBy(() -> service.delete(1L, "REQ-MISSING-000001"))
                 .isInstanceOf(RequirementException.class)
                 .extracting("errorCode")
                 .isEqualTo(RequirementErrorCode.REQUIREMENT_NOT_FOUND);

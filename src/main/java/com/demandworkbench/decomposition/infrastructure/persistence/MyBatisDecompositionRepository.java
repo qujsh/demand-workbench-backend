@@ -31,9 +31,10 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
     }
 
     @Override
-    public void create(String id, String content, String model, String promptVersion, LocalDateTime createdAt) {
+    public void create(String id, long ownerUserId, String content, String model, String promptVersion, LocalDateTime createdAt) {
         var record = new DecompositionRecord();
         record.setDecompositionNo(id);
+        record.setOwnerUserId(ownerUserId);
         record.setSourceContent(content);
         record.setStatus(TaskStatus.QUEUED.getCode());
         record.setStage(TaskStage.QUEUED.getCode());
@@ -73,7 +74,7 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
         var errorCode = record.getErrorCode() == null
                 ? null
                 : DecompositionErrorCode.fromCode(record.getErrorCode());
-        return new TaskSnapshot(record.getDecompositionNo(), TaskStatus.fromCode(record.getStatus()),
+        return new TaskSnapshot(record.getDecompositionNo(), record.getOwnerUserId(), TaskStatus.fromCode(record.getStatus()),
                 TaskStage.fromCode(record.getStage()), errorCode,
                 record.getErrorMessage(),
                 record.getCreatedAt(), record.getCompletedAt());
@@ -107,16 +108,17 @@ public class MyBatisDecompositionRepository implements DecompositionRepository {
 
     @Override
     @Transactional
-    public int deleteWorkItems(List<String> workItemNos) {
+    public int deleteWorkItems(long ownerUserId, List<String> workItemNos) {
+        if (workItemNos.stream().anyMatch(no -> !decompositionMapper.isWorkItemOwnedBy(no, ownerUserId))) return 0;
         var ids = workItemMapper.findIdsIncludingDescendants(workItemNos);
         return ids.isEmpty() ? 0 : workItemMapper.softDeleteByIds(ids);
     }
 
     @Override
     @Transactional
-    public WorkItemData saveWorkItem(WorkItemData data) {
+    public WorkItemData saveWorkItem(long ownerUserId, WorkItemData data) {
         var decomposition = decompositionMapper.findByDecompositionNo(data.decompositionNo());
-        if (decomposition == null) throw new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND);
+        if (decomposition == null || decomposition.getOwnerUserId() != ownerUserId) throw new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND);
 
         if (data.workItemNo() != null && !data.workItemNo().isBlank()) {
             var existing = workItemMapper.findByWorkItemNo(data.workItemNo());

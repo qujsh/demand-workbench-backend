@@ -27,8 +27,8 @@ class RequirementSchemaMigrationTest {
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())) {
             long requirementId;
             try (var statement = connection.prepareStatement("""
-                    INSERT INTO requirement (title_code, title, stage)
-                    VALUES ('KFYTYY', '开发一套预约服务系统', 'draft')
+                    INSERT INTO requirement (owner_user_id, title_code, title, stage)
+                    VALUES (1, 'KFYTYY', '开发一套预约服务系统', 'draft')
                     """, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                 statement.executeUpdate();
                 try (var keys = statement.getGeneratedKeys()) {

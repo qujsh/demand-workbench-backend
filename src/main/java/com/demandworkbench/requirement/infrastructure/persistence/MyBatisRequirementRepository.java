@@ -32,7 +32,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_SAVE_FAILED);
         }
         replaceAttachments(record.getId(), requirement.attachments());
-        return findById(record.getId());
+        return findById(record.getId(), record.getOwnerUserId());
     }
 
     @Override
@@ -43,56 +43,56 @@ public class MyBatisRequirementRepository implements RequirementRepository {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
         replaceAttachments(record.getId(), requirement.attachments());
-        return findById(record.getId());
+        return findById(record.getId(), record.getOwnerUserId());
     }
 
     @Override
-    public RequirementData findByRequirementNo(String requirementNo) {
-        var record = requirementMapper.findByRequirementNo(requirementNo);
+    public RequirementData findByRequirementNo(long ownerUserId, String requirementNo) {
+        var record = requirementMapper.findByRequirementNo(ownerUserId, requirementNo);
         return record == null ? null : toData(record);
     }
 
     @Override
-    public List<RequirementData> findAll() {
-        return requirementMapper.findAll().stream().map(this::toData).toList();
+    public List<RequirementData> findAll(long ownerUserId) {
+        return requirementMapper.findAll(ownerUserId).stream().map(this::toData).toList();
     }
 
     @Override
-    public PublishSummaryData findPublishSummary(String requirementNo) {
-        var record = requirementMapper.findPublishSummary(requirementNo);
+    public PublishSummaryData findPublishSummary(long ownerUserId, String requirementNo) {
+        var record = requirementMapper.findPublishSummary(ownerUserId, requirementNo);
         return record == null ? null : new PublishSummaryData(record.getRequirementNo(),
                 record.getPublishSummaryStatus(), record.getPublishSummary(),
                 record.getPublishSummaryPromptVersion(), record.getPublishSummaryGeneratedAt());
     }
 
     @Override
-    public void updatePublishSummaryStatus(String requirementNo, String status, String promptVersion) {
-        if (requirementMapper.updatePublishSummaryStatus(requirementNo, status, promptVersion) != 1) {
+    public void updatePublishSummaryStatus(long ownerUserId, String requirementNo, String status, String promptVersion) {
+        if (requirementMapper.updatePublishSummaryStatus(ownerUserId, requirementNo, status, promptVersion) != 1) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
     }
 
     @Override
-    public void savePublishSummary(String requirementNo, String content, String promptVersion) {
-        if (requirementMapper.savePublishSummary(requirementNo, content, promptVersion) != 1) {
+    public void savePublishSummary(long ownerUserId, String requirementNo, String content, String promptVersion) {
+        if (requirementMapper.savePublishSummary(ownerUserId, requirementNo, content, promptVersion) != 1) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
     }
 
     @Override
-    public void updateStage(String requirementNo, String stage) {
-        if (requirementMapper.updateStage(requirementNo, stage) != 1) {
+    public void updateStage(long ownerUserId, String requirementNo, String stage) {
+        if (requirementMapper.updateStage(ownerUserId, requirementNo, stage) != 1) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
     }
 
     @Override
-    public boolean softDelete(String requirementNo) {
-        return requirementMapper.softDelete(requirementNo) == 1;
+    public boolean softDelete(long ownerUserId, String requirementNo) {
+        return requirementMapper.softDelete(ownerUserId, requirementNo) == 1;
     }
 
-    private RequirementData findById(long id) {
-        var record = requirementMapper.findById(id);
+    private RequirementData findById(long id, long ownerUserId) {
+        var record = requirementMapper.findById(id, ownerUserId);
         if (record == null) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
@@ -116,6 +116,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
     private RequirementRecord toRecord(RequirementData data) {
         var record = new RequirementRecord();
         record.setId(data.id());
+        record.setOwnerUserId(data.ownerUserId());
         record.setRequirementNo(data.requirementNo());
         record.setTitleCode(data.titleCode());
         record.setTitle(data.title());
@@ -131,7 +132,7 @@ public class MyBatisRequirementRepository implements RequirementRepository {
                 .map(item -> new RequirementData.AttachmentData(item.getId(), item.getFileName(),
                         item.getStorageKey(), item.getContentType(), item.getFileSize(), item.getSortOrder()))
                 .toList();
-        return new RequirementData(record.getId(), record.getRequirementNo(), record.getTitleCode(),
+        return new RequirementData(record.getId(), record.getOwnerUserId(), record.getRequirementNo(), record.getTitleCode(),
                 record.getTitle(), record.getUserDescription(), record.getAiDescription(), record.getStage(),
                 record.getCurrentDecompositionNo(), record.getCreatedAt(), record.getUpdatedAt(),
                 record.getModuleCount(), record.getWorkItemCount(), attachments);

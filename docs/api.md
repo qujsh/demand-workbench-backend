@@ -1,5 +1,14 @@
 # 接口契约
 
+## 账号认证
+
+- `POST /api/v1/auth/sms/send`：发送开发期手机验证码；当前开发验证码固定为 `123456`。
+- `POST /api/v1/auth/sms/login`：验证码登录或自动注册，并写入 `DW_SESSION` HttpOnly Cookie。
+- `POST /api/v1/auth/logout`：撤销当前会话并清除 Cookie。
+- `GET /api/v1/users/me`：查询当前登录用户和发布人等级。
+
+除发送验证码和登录外，`/api/**` 接口均要求有效会话。需求、拆解任务、工作项和发布任务均按当前用户隔离；访问其他用户的资源按资源不存在处理。
+
 ## 提交需求拆解任务
 
 接口：`POST /api/v1/requirements/decompose`

@@ -16,12 +16,12 @@ class WorkItemCommandServiceTest {
     @Test
     void shouldDeduplicateAndDeleteWorkItems() {
         var workItemNos = List.of("WORK-1", "SUB-1");
-        when(repository.deleteWorkItems(workItemNos)).thenReturn(2);
+        when(repository.deleteWorkItems(1L, workItemNos)).thenReturn(2);
 
-        var deletedCount = service.delete(List.of("WORK-1", "SUB-1", "WORK-1"));
+        var deletedCount = service.delete(1L, List.of("WORK-1", "SUB-1", "WORK-1"));
 
         assertThat(deletedCount).isEqualTo(2);
-        verify(repository).deleteWorkItems(workItemNos);
+        verify(repository).deleteWorkItems(1L, workItemNos);
     }
 
     @Test
@@ -32,9 +32,9 @@ class WorkItemCommandServiceTest {
                 "未开始", "前端开发", "high", LocalDate.parse("2026-10-13"), null, null);
         var saved = new WorkItemData("DEC-1-MANUAL-1", "DEC-1", "WORK-1", "subtask", "新子项", "描述",
                 "未开始", "前端开发", "high", LocalDate.parse("2026-10-13"), null, null);
-        when(repository.saveWorkItem(normalized)).thenReturn(saved);
+        when(repository.saveWorkItem(1L, normalized)).thenReturn(saved);
 
-        assertThat(service.save(input)).isEqualTo(saved);
-        verify(repository).saveWorkItem(normalized);
+        assertThat(service.save(1L, input)).isEqualTo(saved);
+        verify(repository).saveWorkItem(1L, normalized);
     }
 }

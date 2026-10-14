@@ -21,9 +21,9 @@ public class DecompositionQueryService {
      * @return 任务状态和拆解结果
      * @throws DecompositionException 任务不存在时抛出
      */
-    public DecompositionResult query(String taskId) {
+    public DecompositionResult query(long ownerUserId, String taskId) {
         var task = repository.find(taskId);
-        if (task == null) throw new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND);
+        if (task == null || task.ownerUserId() != ownerUserId) throw new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND);
         var tree = task.status() == TaskStatus.SUCCESS ? repository.findTree(taskId) : null;
         var modules = tree == null
                 ? List.<DecompositionResult.WorkItem>of()
@@ -33,6 +33,8 @@ public class DecompositionQueryService {
                 task.errorCode() == null ? null : task.errorCode().getCode(),
                 task.createdAt(), task.completedAt());
     }
+
+    public DecompositionResult query(String taskId) { return query(1L, taskId); }
 
     private DecompositionResult.WorkItem toResult(WorkItemNode node) {
         return new DecompositionResult.WorkItem(

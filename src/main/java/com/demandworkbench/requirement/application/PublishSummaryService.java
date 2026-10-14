@@ -24,25 +24,27 @@ public class PublishSummaryService {
     /**
      * 查询需求当前保存的发布简介及生成状态。
      */
-    public PublishSummaryData find(String requirementNo) {
-        var summary = repository.findPublishSummary(requirementNo);
+    public PublishSummaryData find(long ownerUserId, String requirementNo) {
+        var summary = repository.findPublishSummary(ownerUserId, requirementNo);
         if (summary == null) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
         return summary;
     }
 
+    public PublishSummaryData find(String requirementNo) { return find(1L, requirementNo); }
+
     /**
      * 在尚无正式结果时流式生成发布简介；已有正式结果时直接返回已保存内容。
      */
-    public Flux<String> generate(String requirementNo) {
+    public Flux<String> generate(long ownerUserId, String requirementNo) {
         return Flux.defer(() -> {
-            var existing = find(requirementNo);
+            var existing = find(ownerUserId, requirementNo);
             if (StringUtils.hasText(existing.content())) {
                 return Flux.just(existing.content());
             }
 
-            var requirement = repository.findByRequirementNo(requirementNo);
+            var requirement = repository.findByRequirementNo(ownerUserId, requirementNo);
             var userDescription = requirement.userDescription();
             var confirmedAnalysis = extractConfirmedAnalysis(requirement.aiDescription());
             if (!StringUtils.hasText(userDescription) && !StringUtils.hasText(confirmedAnalysis)) {
@@ -50,21 +52,23 @@ public class PublishSummaryService {
             }
             if (!StringUtils.hasText(requirement.aiDescription())) {
                 var content = userDescription.trim();
-                repository.savePublishSummary(requirementNo, content, USER_DESCRIPTION_VERSION);
+                repository.savePublishSummary(ownerUserId, requirementNo, content, USER_DESCRIPTION_VERSION);
                 return Flux.just(content);
             }
 
-            repository.updatePublishSummaryStatus(
+            repository.updatePublishSummaryStatus(ownerUserId,
                     requirementNo, PublishSummaryStatus.GENERATING.getCode(), PROMPT_VERSION);
             var content = new StringBuilder();
             return generator.generate(nullToEmpty(userDescription), confirmedAnalysis)
                     .filter(StringUtils::hasLength)
                     .doOnNext(content::append)
-                    .doOnComplete(() -> saveCompleted(requirementNo, content.toString()))
-                    .doOnError(error -> repository.updatePublishSummaryStatus(
+                    .doOnComplete(() -> saveCompleted(ownerUserId, requirementNo, content.toString()))
+                    .doOnError(error -> repository.updatePublishSummaryStatus(ownerUserId,
                             requirementNo, PublishSummaryStatus.FAILED.getCode(), PROMPT_VERSION));
         });
     }
+
+    public Flux<String> generate(String requirementNo) { return generate(1L, requirementNo); }
 
     private String extractConfirmedAnalysis(String analysis) {
         if (!StringUtils.hasText(analysis)) return "";
@@ -76,12 +80,12 @@ public class PublishSummaryService {
         return value == null ? "" : value.trim();
     }
 
-    private void saveCompleted(String requirementNo, String content) {
+    private void saveCompleted(long ownerUserId, String requirementNo, String content) {
         if (!StringUtils.hasText(content)) {
-            repository.updatePublishSummaryStatus(
+            repository.updatePublishSummaryStatus(ownerUserId,
                     requirementNo, PublishSummaryStatus.FAILED.getCode(), PROMPT_VERSION);
             throw new RequirementException(RequirementErrorCode.PUBLISH_SUMMARY_GENERATION_FAILED);
         }
-        repository.savePublishSummary(requirementNo, content.trim(), PROMPT_VERSION);
+        repository.savePublishSummary(ownerUserId, requirementNo, content.trim(), PROMPT_VERSION);
     }
 }

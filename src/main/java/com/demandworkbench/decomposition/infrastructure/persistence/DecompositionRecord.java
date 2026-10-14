@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class DecompositionRecord {
     private Long id;
+    private Long ownerUserId;
     private String decompositionNo;
     private String sourceContent;
     private String status;

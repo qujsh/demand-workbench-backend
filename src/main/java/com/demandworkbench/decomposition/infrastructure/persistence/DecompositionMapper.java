@@ -7,10 +7,17 @@ import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface DecompositionMapper {
+    @Select("""
+        SELECT COUNT(*) > 0 FROM work_item w
+        JOIN decomposition_record d ON d.id = w.decomposition_id AND d.deleted = 0
+        WHERE w.work_item_no = #{workItemNo} AND w.deleted = 0 AND d.owner_user_id = #{ownerUserId}
+        """)
+    boolean isWorkItemOwnedBy(@Param("workItemNo") String workItemNo, @Param("ownerUserId") long ownerUserId);
+
     @Insert("""
         INSERT INTO decomposition_record
-        (decomposition_no, source_content, status, stage, model, prompt_version, created_at)
-        VALUES (#{decompositionNo}, #{sourceContent}, #{status}, #{stage}, #{model}, #{promptVersion}, #{createdAt})
+        (decomposition_no, owner_user_id, source_content, status, stage, model, prompt_version, created_at)
+        VALUES (#{decompositionNo}, #{ownerUserId}, #{sourceContent}, #{status}, #{stage}, #{model}, #{promptVersion}, #{createdAt})
         """)
     void insert(DecompositionRecord record);
 

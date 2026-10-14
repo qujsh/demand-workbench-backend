@@ -14,11 +14,13 @@ import com.demandworkbench.decomposition.application.SubmitResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(DecompositionController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class DecompositionControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -31,7 +33,7 @@ class DecompositionControllerTest {
 
     @Test
     void shouldWrapSuccessfulSubmission() throws Exception {
-        when(commandService.submit("新增登录功能"))
+        when(commandService.submit(1L, "新增登录功能"))
                 .thenReturn(new SubmitResult("DEC-1", "queued", "拆解任务已提交"));
 
         mockMvc.perform(post("/api/v1/requirements/decompose")
@@ -63,7 +65,7 @@ class DecompositionControllerTest {
 
     @Test
     void shouldWrapApplicationFailure() throws Exception {
-        when(queryService.query("DEC-MISSING"))
+        when(queryService.query(1L, "DEC-MISSING"))
                 .thenThrow(new DecompositionException(DecompositionErrorCode.TASK_NOT_FOUND));
 
         mockMvc.perform(get("/api/v1/requirements/decompose")

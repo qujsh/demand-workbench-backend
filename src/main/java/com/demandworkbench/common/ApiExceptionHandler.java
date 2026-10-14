@@ -6,6 +6,7 @@ import com.demandworkbench.requirement.application.RequirementException;
 import com.demandworkbench.requirement.application.RequirementErrorCode;
 import com.demandworkbench.requirement.controller.request.SaveRequirementRequest;
 import com.demandworkbench.requirement.controller.request.SavePublishTaskRequest;
+import com.demandworkbench.identity.application.AuthException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class ApiExceptionHandler {
+    @ExceptionHandler(AuthException.class)
+    ResponseEntity<ApiResponse<Void>> handleAuth(AuthException exception) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.failure(exception.getErrorCode(), exception.getMessage()));
+    }
     @ExceptionHandler(DecompositionException.class)
     ResponseEntity<ApiResponse<Void>> handleDecomposition(DecompositionException exception) {
         var errorCode = exception.getErrorCode();

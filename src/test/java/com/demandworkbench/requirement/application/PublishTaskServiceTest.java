@@ -17,19 +17,19 @@ class PublishTaskServiceTest {
 
     @Test
     void shouldAllowIncompleteDraft() {
-        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement());
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement());
         when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.save("REQ-1", task("draft", "", ""));
+        service.save(1L, "REQ-1", task("draft", "", ""));
 
         verify(taskRepository).save(any());
     }
 
     @Test
     void shouldRejectPublishedTaskWithoutDecomposition() {
-        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement(null));
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement(null));
 
-        assertThatThrownBy(() -> service.save("REQ-1", task("published", "任务", "简介")))
+        assertThatThrownBy(() -> service.save(1L, "REQ-1", task("published", "任务", "简介")))
                 .isInstanceOf(RequirementException.class)
                 .extracting("errorCode")
                 .isEqualTo(RequirementErrorCode.INVALID_PUBLISH_TASK);
@@ -37,12 +37,12 @@ class PublishTaskServiceTest {
 
     @Test
     void shouldUpdateRequirementStageAfterPublishing() {
-        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement("DEC-1"));
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("DEC-1"));
         when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.save("REQ-1", task("published", "任务", "简介"));
+        service.save(1L, "REQ-1", task("published", "任务", "简介"));
 
-        verify(requirementRepository).updateStage("REQ-1", "published");
+        verify(requirementRepository).updateStage(1L, "REQ-1", "published");
     }
 
     @Test
@@ -51,18 +51,20 @@ class PublishTaskServiceTest {
         var cancelled = task("cancelled", "任务", "简介");
         when(taskRepository.findByRequirementNo("REQ-1")).thenReturn(published);
         when(taskRepository.cancel("REQ-1")).thenReturn(cancelled);
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("DEC-1"));
 
-        service.cancel("REQ-1");
+        service.cancel(1L, "REQ-1");
 
         verify(taskRepository).cancel("REQ-1");
-        verify(requirementRepository).updateStage("REQ-1", "cancelled");
+        verify(requirementRepository).updateStage(1L, "REQ-1", "cancelled");
     }
 
     @Test
     void shouldRejectCancellingDraftTask() {
         when(taskRepository.findByRequirementNo("REQ-1")).thenReturn(task("draft", "任务", "简介"));
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("DEC-1"));
 
-        assertThatThrownBy(() -> service.cancel("REQ-1"))
+        assertThatThrownBy(() -> service.cancel(1L, "REQ-1"))
                 .isInstanceOf(RequirementException.class)
                 .extracting("errorCode")
                 .isEqualTo(RequirementErrorCode.PUBLISH_TASK_CANCEL_FAILED);
@@ -70,27 +72,27 @@ class PublishTaskServiceTest {
 
     @Test
     void shouldKeepCancelledStatusWhileEditingRepublishDraft() {
-        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement("DEC-1"));
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("DEC-1"));
         when(taskRepository.findByRequirementNo("REQ-1"))
                 .thenReturn(task("cancelled", "旧任务", "旧简介"));
         when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var saved = service.save("REQ-1", task("draft", "新任务", "新简介"));
+        var saved = service.save(1L, "REQ-1", task("draft", "新任务", "新简介"));
 
         assertThat(saved.status()).isEqualTo("cancelled");
     }
 
     @Test
     void shouldRepublishCancelledTaskAfterConfirmation() {
-        when(requirementRepository.findByRequirementNo("REQ-1")).thenReturn(requirement("DEC-1"));
+        when(requirementRepository.findByRequirementNo(1L, "REQ-1")).thenReturn(requirement("DEC-1"));
         when(taskRepository.findByRequirementNo("REQ-1"))
                 .thenReturn(task("cancelled", "旧任务", "旧简介"));
         when(taskRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var saved = service.save("REQ-1", task("published", "新任务", "新简介"));
+        var saved = service.save(1L, "REQ-1", task("published", "新任务", "新简介"));
 
         assertThat(saved.status()).isEqualTo("published");
-        verify(requirementRepository).updateStage("REQ-1", "published");
+        verify(requirementRepository).updateStage(1L, "REQ-1", "published");
     }
 
     private PublishTaskData task(String status, String title, String summary) {

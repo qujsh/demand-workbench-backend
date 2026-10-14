@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class RequirementRecord {
     private Long id;
+    private Long ownerUserId;
     private String requirementNo;
     private String titleCode;
     private String title;

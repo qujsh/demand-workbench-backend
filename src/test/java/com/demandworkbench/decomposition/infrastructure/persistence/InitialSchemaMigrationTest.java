@@ -30,8 +30,8 @@ class InitialSchemaMigrationTest {
              var statement = connection.createStatement()) {
             statement.executeUpdate("""
                     INSERT INTO decomposition_record
-                    (decomposition_no, source_content, status, stage, prompt_version, error_code, created_at)
-                    VALUES ('DEC-1', 'test', 'failed', 'failed', 'v1', 'S048101004', CURRENT_TIMESTAMP(3))
+                    (decomposition_no, owner_user_id, source_content, status, stage, prompt_version, error_code, created_at)
+                    VALUES ('DEC-1', 1, 'test', 'failed', 'failed', 'v1', 'S048101004', CURRENT_TIMESTAMP(3))
                     """);
             try (var result = statement.executeQuery(
                     "SELECT id FROM decomposition_record WHERE decomposition_no = 'DEC-1'")) {
@@ -57,8 +57,8 @@ class InitialSchemaMigrationTest {
                     """.formatted(decompositionId, parentId));
             statement.executeUpdate("""
                     INSERT INTO requirement
-                    (requirement_no, title_code, title, stage, current_decomposition_id)
-                    VALUES ('REQ-CS-000001', 'CS', '测试需求', 'draft', %d)
+                    (requirement_no, owner_user_id, title_code, title, stage, current_decomposition_id)
+                    VALUES ('REQ-CS-000001', 1, 'CS', '测试需求', 'draft', %d)
                     """.formatted(decompositionId));
         }
 
@@ -75,6 +75,8 @@ class InitialSchemaMigrationTest {
             assertThat(result.getString("version")).isEqualTo("202610131500");
             assertThat(result.next()).isTrue();
             assertThat(result.getString("version")).isEqualTo("202610131630");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("version")).isEqualTo("202610141000");
             assertThat(result.next()).isFalse();
         }
 
@@ -147,7 +149,7 @@ class InitialSchemaMigrationTest {
                        AND column_comment <> ''
                      """)) {
             assertThat(columns.next()).isTrue();
-            assertThat(columns.getInt("documented_columns")).isEqualTo(59);
+            assertThat(columns.getInt("documented_columns")).isEqualTo(61);
         }
 
         try (var connection = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());

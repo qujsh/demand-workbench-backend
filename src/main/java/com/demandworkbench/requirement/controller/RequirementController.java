@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import com.demandworkbench.identity.application.AuthenticatedUser;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,46 +47,46 @@ public class RequirementController {
     @PostMapping("/save")
     public ApiResponse<RequirementResponse> save(
             @RequestParam(required = false) String requirementNo,
-            @Valid @RequestBody SaveRequirementRequest request) {
-        return ApiResponse.success(RequirementResponse.from(service.save(requirementNo, request.toCommand())));
+            @Valid @RequestBody SaveRequirementRequest request, Authentication authentication) {
+        return ApiResponse.success(RequirementResponse.from(service.save(currentUserId(authentication), requirementNo, request.toCommand())));
     }
 
     /**
      * 按业务编号查询需求详情。
      */
     @GetMapping("/detail")
-    public ApiResponse<RequirementResponse> detail(@RequestParam @NotBlank String requirementNo) {
-        return ApiResponse.success(RequirementResponse.from(service.find(requirementNo)));
+    public ApiResponse<RequirementResponse> detail(@RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        return ApiResponse.success(RequirementResponse.from(service.find(currentUserId(authentication), requirementNo)));
     }
 
     /**
      * 查询需求列表。
      */
     @GetMapping("/list")
-    public ApiResponse<List<RequirementResponse>> list() {
-        return ApiResponse.success(service.list().stream().map(RequirementResponse::from).toList());
+    public ApiResponse<List<RequirementResponse>> list(Authentication authentication) {
+        return ApiResponse.success(service.list(currentUserId(authentication)).stream().map(RequirementResponse::from).toList());
     }
 
     /** 查询需求对应的任务发布草稿或正式任务。 */
     @GetMapping("/publish-task")
-    public ApiResponse<PublishTaskResponse> publishTask(@RequestParam @NotBlank String requirementNo) {
-        return ApiResponse.success(PublishTaskResponse.from(publishTaskService.find(requirementNo)));
+    public ApiResponse<PublishTaskResponse> publishTask(@RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        return ApiResponse.success(PublishTaskResponse.from(publishTaskService.find(currentUserId(authentication), requirementNo)));
     }
 
     /** 保存发布草稿或确认发布任务。 */
     @PostMapping("/publish-task/save")
     public ApiResponse<PublishTaskResponse> savePublishTask(
             @RequestParam @NotBlank String requirementNo,
-            @Valid @RequestBody SavePublishTaskRequest request) {
+            @Valid @RequestBody SavePublishTaskRequest request, Authentication authentication) {
         return ApiResponse.success(PublishTaskResponse.from(
-                publishTaskService.save(requirementNo, request.toData(requirementNo))));
+                publishTaskService.save(currentUserId(authentication), requirementNo, request.toData(requirementNo))));
     }
 
     /** 取消已经发布的任务。 */
     @PostMapping("/publish-task/cancel")
     public ApiResponse<PublishTaskResponse> cancelPublishTask(
-            @RequestParam @NotBlank String requirementNo) {
-        return ApiResponse.success(PublishTaskResponse.from(publishTaskService.cancel(requirementNo)));
+            @RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        return ApiResponse.success(PublishTaskResponse.from(publishTaskService.cancel(currentUserId(authentication), requirementNo)));
     }
 
     /**
@@ -92,20 +94,21 @@ public class RequirementController {
      */
     @GetMapping("/publish-summary")
     public ApiResponse<PublishSummaryResponse> publishSummary(
-            @RequestParam @NotBlank String requirementNo) {
-        return ApiResponse.success(PublishSummaryResponse.from(publishSummaryService.find(requirementNo)));
+            @RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        return ApiResponse.success(PublishSummaryResponse.from(publishSummaryService.find(currentUserId(authentication), requirementNo)));
     }
 
     /**
      * 流式生成需求对应的发布任务简介。
      */
     @PostMapping(value = "/publish-summary/generate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter generatePublishSummary(@RequestParam @NotBlank String requirementNo) {
+    public SseEmitter generatePublishSummary(@RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        var userId = currentUserId(authentication);
         var emitter = new SseEmitter(300_000L);
         var clientConnected = new AtomicBoolean(true);
         emitter.onCompletion(() -> clientConnected.set(false));
         emitter.onTimeout(() -> clientConnected.set(false));
-        publishSummaryService.generate(requirementNo).subscribe(
+        publishSummaryService.generate(userId, requirementNo).subscribe(
                 chunk -> sendEvent(emitter, clientConnected, "content", new ContentEvent(chunk)),
                 error -> {
                     sendEvent(emitter, clientConnected, "error",
@@ -113,7 +116,7 @@ public class RequirementController {
                     emitter.complete();
                 },
                 () -> {
-                    var completed = publishSummaryService.find(requirementNo);
+                    var completed = publishSummaryService.find(userId, requirementNo);
                     sendEvent(emitter, clientConnected, "complete", PublishSummaryResponse.from(completed));
                     emitter.complete();
                 });
@@ -124,8 +127,8 @@ public class RequirementController {
      * 按业务编号软删除需求。
      */
     @PostMapping("/delete")
-    public ApiResponse<String> delete(@RequestParam @NotBlank String requirementNo) {
-        service.delete(requirementNo);
+    public ApiResponse<String> delete(@RequestParam @NotBlank String requirementNo, Authentication authentication) {
+        service.delete(currentUserId(authentication), requirementNo);
         return ApiResponse.success("deleted");
     }
 
@@ -136,6 +139,10 @@ public class RequirementController {
         } catch (IOException exception) {
             clientConnected.set(false);
         }
+    }
+
+    private long currentUserId(Authentication authentication) {
+        return authentication == null ? 1L : ((AuthenticatedUser) authentication.getPrincipal()).id();
     }
 
     private record ContentEvent(String text) {

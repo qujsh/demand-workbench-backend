@@ -31,10 +31,10 @@ public class DecompositionCommandService {
      * @return 新建任务的编号和初始状态
      * @throws DecompositionException 任务无法提交到执行队列时抛出
      */
-    public SubmitResult submit(String content) {
+    public SubmitResult submit(long ownerUserId, String content) {
         var taskId = "DEC-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
         var normalizedContent = content.trim();
-        repository.create(taskId, normalizedContent, properties.model(), properties.promptVersion(), LocalDateTime.now());
+        repository.create(taskId, ownerUserId, normalizedContent, properties.model(), properties.promptVersion(), LocalDateTime.now());
         try {
             taskExecutor.execute(() -> jobRunner.run(taskId, normalizedContent));
         } catch (RuntimeException exception) {
@@ -44,4 +44,6 @@ public class DecompositionCommandService {
         }
         return new SubmitResult(taskId, TaskStatus.QUEUED.getCode(), "拆解任务已提交");
     }
+
+    public SubmitResult submit(String content) { return submit(1L, content); }
 }

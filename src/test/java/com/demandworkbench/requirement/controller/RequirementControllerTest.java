@@ -18,11 +18,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(RequirementController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class RequirementControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +43,7 @@ class RequirementControllerTest {
         var now = LocalDateTime.of(2026, 10, 12, 16, 0);
         var saved = new RequirementData(25L, "REQ-KFYTYY-000025", "KFYTYY", "开发一套预约服务系统",
                 "用户描述", "AI 描述", "draft", null, now, now, 0, 0, List.of());
-        when(service.save(eq(null), any())).thenReturn(saved);
+        when(service.save(eq(1L), eq(null), any())).thenReturn(saved);
 
         mockMvc.perform(post("/api/v1/requirements/save")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -78,12 +80,12 @@ class RequirementControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(service).delete("REQ-KFYTYY-000025");
+        verify(service).delete(1L, "REQ-KFYTYY-000025");
     }
 
     @Test
     void shouldReturnSavedPublishSummary() throws Exception {
-        when(publishSummaryService.find("REQ-KFYTYY-000025")).thenReturn(
+        when(publishSummaryService.find(1L, "REQ-KFYTYY-000025")).thenReturn(
                 new PublishSummaryData("REQ-KFYTYY-000025", "success", "精简任务简介",
                         "publish-summary-v1", LocalDateTime.of(2026, 10, 13, 10, 30)));
 

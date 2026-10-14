@@ -13,11 +13,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(WorkItemController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class WorkItemControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -28,7 +30,7 @@ class WorkItemControllerTest {
     @Test
     void shouldDeleteSelectedWorkItems() throws Exception {
         var workItemNos = List.of("WORK-1", "SUB-1");
-        when(service.delete(workItemNos)).thenReturn(2);
+        when(service.delete(1L, workItemNos)).thenReturn(2);
 
         mockMvc.perform(post("/api/v1/work-items/delete")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -39,7 +41,7 @@ class WorkItemControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.msg.deletedCount").value(2));
 
-        verify(service).delete(workItemNos);
+        verify(service).delete(1L, workItemNos);
     }
 
     @Test
@@ -57,7 +59,7 @@ class WorkItemControllerTest {
     void shouldSaveWorkItem() throws Exception {
         var saved = new WorkItemData("DEC-1-MANUAL-1", "DEC-1", "WORK-1", "subtask", "新增子项", "说明",
                 "未开始", "前端开发", "high", LocalDate.parse("2026-10-13"), null, null);
-        when(service.save(org.mockito.ArgumentMatchers.any(WorkItemData.class))).thenReturn(saved);
+        when(service.save(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any(WorkItemData.class))).thenReturn(saved);
 
         mockMvc.perform(post("/api/v1/work-items/save")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -13,16 +13,18 @@ public class PublishTaskService {
         this.requirementRepository = requirementRepository;
     }
 
-    public PublishTaskData find(String requirementNo) {
-        if (requirementRepository.findByRequirementNo(requirementNo) == null) {
+    public PublishTaskData find(long ownerUserId, String requirementNo) {
+        if (requirementRepository.findByRequirementNo(ownerUserId, requirementNo) == null) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
         return taskRepository.findByRequirementNo(requirementNo);
     }
 
+    public PublishTaskData find(String requirementNo) { return find(1L, requirementNo); }
+
     @Transactional
-    public PublishTaskData save(String requirementNo, PublishTaskData command) {
-        var requirement = requirementRepository.findByRequirementNo(requirementNo);
+    public PublishTaskData save(long ownerUserId, String requirementNo, PublishTaskData command) {
+        var requirement = requirementRepository.findByRequirementNo(ownerUserId, requirementNo);
         if (requirement == null) {
             throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
         }
@@ -45,19 +47,26 @@ public class PublishTaskService {
                 command.startDate(), command.deadline(), command.workMode(), command.recruitMode(),
                 command.visibility(), null));
         if ("published".equals(saved.status())) {
-            requirementRepository.updateStage(requirementNo, "published");
+            requirementRepository.updateStage(ownerUserId, requirementNo, "published");
         }
         return saved;
     }
 
+    public PublishTaskData save(String requirementNo, PublishTaskData command) { return save(1L, requirementNo, command); }
+
     @Transactional
-    public PublishTaskData cancel(String requirementNo) {
+    public PublishTaskData cancel(long ownerUserId, String requirementNo) {
+        if (requirementRepository.findByRequirementNo(ownerUserId, requirementNo) == null) {
+            throw new RequirementException(RequirementErrorCode.REQUIREMENT_NOT_FOUND);
+        }
         var task = taskRepository.findByRequirementNo(requirementNo);
         if (task == null || !"published".equals(task.status())) {
             throw new RequirementException(RequirementErrorCode.PUBLISH_TASK_CANCEL_FAILED);
         }
         var cancelled = taskRepository.cancel(requirementNo);
-        requirementRepository.updateStage(requirementNo, "cancelled");
+        requirementRepository.updateStage(ownerUserId, requirementNo, "cancelled");
         return cancelled;
     }
+
+    public PublishTaskData cancel(String requirementNo) { return cancel(1L, requirementNo); }
 }
