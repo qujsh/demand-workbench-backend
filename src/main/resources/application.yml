@@ -28,7 +28,7 @@ mybatis:
 
 deepseek:
   model: ${DEEPSEEK_MODEL:deepseek-chat}
-  prompt-version: work-item-tree-v2
+  prompt-version: work-item-tree-v4
 
 decomposition:
   executor:
